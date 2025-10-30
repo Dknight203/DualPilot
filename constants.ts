@@ -1,0 +1,65 @@
+import { Plan, PlanId } from './types';
+
+export const PRICING_PLANS: Plan[] = [
+  {
+    id: PlanId.Essentials,
+    name: 'Essentials',
+    price: 49,
+    pricePeriod: 'monthly',
+    pages: 50,
+    refresh: 'Weekly refresh',
+    features: [
+      'Up to 50 pages',
+      'Weekly refresh',
+      'AI meta generation',
+      'JSON-LD Schema',
+      'IndexNow Pings',
+      'Visibility Score',
+    ],
+  },
+  {
+    id: PlanId.Pro,
+    name: 'Pro',
+    price: 99,
+    pricePeriod: 'monthly',
+    pages: 250,
+    refresh: 'Daily refresh',
+    features: [
+      'Up to 250 pages',
+      'Daily refresh',
+      'Everything in Essentials',
+      'Priority Support',
+      'Advanced Analytics',
+    ],
+  },
+  {
+    id: PlanId.Agency,
+    name: 'Agency',
+    price: 299,
+    pricePeriod: 'monthly',
+    pages: 1000,
+    refresh: 'Daily refresh',
+    features: [
+      'Up to 1000 pages',
+      'Client Accounts',
+      'Everything in Pro',
+      'White-label reports',
+      'API Access',
+    ],
+  },
+  {
+    id: PlanId.Enterprise,
+    name: 'Enterprise',
+    price: 'Custom',
+    pricePeriod: '',
+    pages: 'Unlimited',
+    refresh: 'Continuous refresh',
+    features: [
+      'Unlimited pages',
+      'Continuous refresh with SLA',
+      'Everything in Agency',
+      'Dedicated Account Manager',
+      'On-premise option',
+    ],
+  },
+];
