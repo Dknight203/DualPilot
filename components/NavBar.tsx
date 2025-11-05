@@ -4,6 +4,17 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
+// FIX: Refactored NavLinkItem to use an interface and React.FC to resolve type errors.
+interface NavLinkItemProps {
+    href: string;
+    children: React.ReactNode;
+}
+const NavLinkItem: React.FC<NavLinkItemProps> = ({ href, children }) => (
+  <Link href={href} className="text-base font-medium text-gray-600 hover:text-brand-blue transition-colors">
+      {children}
+  </Link>
+);
+
 export default function NavBar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,12 +33,6 @@ export default function NavBar() {
     setIsMenuOpen(false);
     router.push('/');
   };
-
-  const NavLinkItem = ({ href, children }: { href: string; children: React.ReactNode }) => (
-    <Link href={href} className="text-base font-medium text-gray-600 hover:text-brand-blue transition-colors">
-        {children}
-    </Link>
-  );
 
   return (
     <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200">

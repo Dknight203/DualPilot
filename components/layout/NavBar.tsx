@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../common/Button';
+import SiteSwitcher from '../site/SiteSwitcher';
 
 const NavBar: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
@@ -33,6 +34,7 @@ const NavBar: React.FC = () => {
           <div className="flex items-center space-x-4">
              {isAuthenticated ? (
                 <>
+                  <SiteSwitcher />
                   <NavLink to="/settings" className={`${navLinkClasses} hidden sm:block`}>Settings</NavLink>
                   <Button onClick={handleLogout} variant="outline" size="sm">Log Out</Button>
                 </>

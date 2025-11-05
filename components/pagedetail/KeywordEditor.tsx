@@ -25,7 +25,7 @@ const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords 
                 <textarea
                     id="keywords"
                     rows={3}
-                    className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-accent-default focus:border-accent-default"
+                    className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-accent-default focus:border-accent-default bg-white text-slate-900"
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
                 />

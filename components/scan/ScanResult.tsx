@@ -4,6 +4,7 @@ import { ScanResult } from '../../types';
 import Button from '../common/Button';
 import Card from '../common/Card';
 import ScoreGauge from '../common/ScoreGauge';
+import Checklist from './Checklist';
 
 interface ScanResultProps {
   result: ScanResult;
@@ -38,12 +39,10 @@ const ScanResultComponent: React.FC<ScanResultProps> = ({ result }) => {
                 </div>
             </div>
             <div>
-                <h3 className="text-lg font-medium text-slate-900">Top Issues</h3>
-                <ul className="mt-2 list-disc list-inside space-y-1 text-slate-600">
-                    {result.issues.map((issue, index) => (
-                        <li key={index}>{issue}</li>
-                    ))}
-                </ul>
+                <h3 className="text-lg font-medium text-slate-900">Your Action Checklist</h3>
+                <div className="mt-2">
+                   <Checklist issues={result.issues} />
+                </div>
             </div>
         </div>
       </div>

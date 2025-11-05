@@ -1,8 +1,7 @@
 import Hero from "@/components/Hero";
-import PlanCards from "@/components/PlanCards";
-// FIX: PRICING_PLANS is exported from @/constants, not @/data/seeds.
-import { PRICING_PLANS } from "@/constants";
 import Link from "next/link";
+import PricingSection from "@/app/components/PricingSection";
+import React from "react";
 
 const HowItWorks = () => (
   <div className="bg-gray-50">
@@ -63,19 +62,6 @@ const Benefits = () => (
   </div>
 );
 
-const LogoStrip = () => (
-  <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
-    <p className="text-center text-base font-semibold text-gray-500">Trusted by modern marketing teams</p>
-    <div className="mt-6 grid grid-cols-2 gap-8 md:grid-cols-6 lg:grid-cols-6">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="col-span-1 flex justify-center">
-          <div className="h-8 w-28 bg-gray-200 rounded-lg animate-pulse"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 const FaqItem = ({ question, answer }: { question: string; answer: string }) => (
   <div>
     <dt className="text-lg font-bold text-gray-900">{question}</dt>
@@ -84,7 +70,7 @@ const FaqItem = ({ question, answer }: { question: string; answer: string }) => 
 );
 
 const Faq = () => (
-    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8 md:py-14 lg:py-20">
+    <div className="max-w-7xl mx-auto pt-10 px-4 sm:px-6 lg:px-8 md:pt-14 lg:pt-20 pb-16 md:pb-20">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-gray-900">Frequently Asked Questions</h2>
       </div>
@@ -103,23 +89,9 @@ export default function LandingPage() {
   return (
     <>
       <Hero />
-      <LogoStrip />
       <HowItWorks />
       <Benefits />
-      <div className="bg-gray-50 py-10 px-4 sm:px-6 lg:px-8 md:py-14 lg:py-20">
-          <div className="max-w-7xl mx-auto">
-             <div className="text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-gray-900">Simple, transparent pricing</h2>
-                <p className="mt-4 text-lg text-gray-600">Choose the plan that fits your needs. No hidden fees, ever.</p>
-             </div>
-            <PlanCards plans={PRICING_PLANS} />
-            <div className="mt-10 text-center">
-                <Link href="/pricing" className="rounded-xl bg-blue-600 px-5 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
-                    View full pricing
-                </Link>
-            </div>
-          </div>
-      </div>
+      <PricingSection />
       <Faq />
     </>
   );

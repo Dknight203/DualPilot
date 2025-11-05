@@ -1,4 +1,5 @@
 import AuthGuard from '@/components/AuthGuard';
+import React from 'react';
 
 export default function DashboardLayout({
   children,

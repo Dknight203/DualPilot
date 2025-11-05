@@ -1,47 +1,57 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+const FooterLink: React.FC<{ href: string, children: React.ReactNode }> = ({ href, children }) => (
+    <li>
+        <Link to={href} className="text-[#1E1E1E] hover:text-[#0A66C2]">
+            {children}
+        </Link>
+    </li>
+);
+
 const Footer: React.FC = () => {
-  return (
-    <footer className="bg-primary-default text-slate-300">
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          <div className="space-y-4">
-            <h2 className="text-white text-3xl font-bold">DualPilot</h2>
-            <p className="text-slate-200">Rank on Google. Show up in AI.</p>
-            <p className="text-slate-300 text-sm max-w-xs">
-              DualPilot is an automated AI plus Search visibility engine that audits, optimizes, and keeps your site visible.
-            </p>
-          </div>
-          <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold text-white tracking-wider uppercase">Product</h3>
-                <ul className="mt-4 space-y-4">
-                  <li><Link to="/pricing" className="text-base text-slate-200 hover:text-white">Pricing</Link></li>
-                  <li><Link to="/scan" className="text-base text-slate-200 hover:text-white">Free Scan</Link></li>
-                  <li><Link to="/dashboard" className="text-base text-slate-200 hover:text-white">Dashboard</Link></li>
-                </ul>
-              </div>
-              <div className="mt-12 md:mt-0">
-                <h3 className="text-sm font-semibold text-white tracking-wider uppercase">Company</h3>
-                <ul className="mt-4 space-y-4">
-                  <li><Link to="#" className="text-base text-slate-200 hover:text-white">About</Link></li>
-                  <li><Link to="#" className="text-base text-slate-200 hover:text-white">Contact</Link></li>
-                  <li><Link to="#" className="text-base text-slate-200 hover:text-white">Terms of Service</Link></li>
-                  <li><Link to="#" className="text-base text-slate-200 hover:text-white">Privacy Policy</Link></li>
-                </ul>
-              </div>
+    return (
+        <footer className="border-t border-[#E5E7EB] bg-[#F8FAFC] text-[#1E1E1E]">
+            <div className="max-w-[1100px] mx-auto px-4 sm:px-6">
+                <div className="py-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div className="lg:col-span-4">
+                            <h4 className="font-semibold text-lg text-[#0F172A]">Rank on Google. Show up in AI.</h4>
+                            <p className="mt-2 text-sm text-[#6B7280] max-w-xs">
+                                DualPilot is an automated AI plus Search visibility engine that audits, optimizes, and keeps your site visible.
+                            </p>
+                        </div>
+                        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
+                            <div>
+                                <h3 className="font-semibold text-[#0F172A]">Product</h3>
+                                <ul className="mt-4 space-y-3">
+                                    <FooterLink href="/pricing">Pricing</FooterLink>
+                                    <FooterLink href="/scan">Free Scan</FooterLink>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-[#0F172A]">Company</h3>
+                                <ul className="mt-4 space-y-3">
+                                    <FooterLink href="/about">About</FooterLink>
+                                    <FooterLink href="/contact">Contact</FooterLink>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-[#0F172A]">Legal</h3>
+                                <ul className="mt-4 space-y-3">
+                                    <FooterLink href="/terms">Terms of Service</FooterLink>
+                                    <FooterLink href="/privacy">Privacy Policy</FooterLink>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="border-t border-[#E5E7EB] py-6">
+                    <p className="text-center text-sm text-[#6B7280]">© {new Date().getFullYear()} DualPilot, Inc. All rights reserved.</p>
+                </div>
             </div>
-            {/* You can add more columns here if needed */}
-          </div>
-        </div>
-        <div className="mt-12 border-t border-slate-700 pt-8">
-          <p className="text-base text-slate-400 xl:text-center">&copy; {new Date().getFullYear()} DualPilot, Inc. All rights reserved.</p>
-        </div>
-      </div>
-    </footer>
-  );
+        </footer>
+    );
 };
 
 export default Footer;

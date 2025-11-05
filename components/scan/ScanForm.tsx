@@ -25,7 +25,7 @@ const ScanForm: React.FC<ScanFormProps> = ({ onScan, isLoading }) => {
           type="text"
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
-          className="block w-full px-5 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:ring-accent-default focus:border-accent-default sm:text-sm"
+          className="block w-full px-5 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900"
           placeholder="Enter your domain (e.g., example.com)"
           disabled={isLoading}
         />

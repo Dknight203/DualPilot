@@ -1,3 +1,5 @@
+// FIX: Define and export PlanId enum here to break a circular dependency.
+// Previously, types.ts imported PlanId from constants.ts, while constants.ts imported it from types.ts.
 export enum PlanId {
   Essentials = 'essentials',
   Pro = 'pro',
@@ -97,7 +99,7 @@ export interface PieChartData {
 
 export interface Event {
   id: string;
-  type: 'Optimize' | 'Index Ping' | 'Verification';
+  type: 'Optimize' | 'Index Ping' | 'Verification' | 'Crawl';
   status: 'Success' | 'Failed' | 'In Progress';
   timestamp: string;
   details: string;
@@ -116,4 +118,36 @@ export interface TeamMember {
   name: string;
   email: string;
   role: 'Owner' | 'Admin' | 'Member';
+}
+
+export interface AiCoverageData {
+    name: 'Covered' | 'Not Covered';
+    value: number;
+}
+
+export interface GscDataPoint {
+    date: string;
+    clicks: number;
+    impressions: number;
+}
+
+export interface PageImprovementData {
+    url: string;
+    scoreChange: number;
+}
+
+export interface ReportsData {
+    visibilityTrend: LineChartData[];
+    aiCoverage: AiCoverageData[];
+    gscPerformance?: GscDataPoint[];
+    pageImprovements?: PageImprovementData[];
+}
+
+export interface ImprovedPage {
+    pageId: string;
+    url: string;
+    oldTitle: string;
+    newTitle: string;
+    oldDescription: string;
+    newDescription: string;
 }

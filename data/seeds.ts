@@ -1,17 +1,33 @@
-import { PlanId, Site, Page, PageStatus, ScanResult, LineChartData, StackedBarChartData, PieChartData, Event, Invoice, TeamMember, PageDetails, PageOutput } from '../types';
+import { PlanId, Site, Page, PageStatus, ScanResult, LineChartData, StackedBarChartData, PieChartData, Event, Invoice, TeamMember, PageDetails, PageOutput, AiCoverageData, ReportsData, ImprovedPage, GscDataPoint, PageImprovementData } from '../types';
 
-export const seedSite: Site = {
-  id: 'site_1',
-  ownerUserId: 'user_1',
-  domain: 'example.com',
-  siteName: 'My Awesome Site',
-  plan: PlanId.Pro,
-  refreshPolicy: 'Daily',
-  verified: true,
-  createdAt: '2023-10-01T10:00:00Z',
-  totalPages: 250,
-  optimizedPages: 18,
-};
+export const seedSites: Site[] = [
+  {
+    id: 'site_1',
+    ownerUserId: 'user_1',
+    domain: 'awesomesite.com',
+    siteName: 'My Awesome Site',
+    plan: PlanId.Pro,
+    refreshPolicy: 'Daily',
+    verified: true,
+    createdAt: '2023-10-01T10:00:00Z',
+    totalPages: 250,
+    optimizedPages: 180,
+  },
+  {
+    id: 'site_2',
+    ownerUserId: 'user_1',
+    domain: 'superblog.io',
+    siteName: 'My Super Blog',
+    plan: PlanId.Essentials,
+    refreshPolicy: 'Weekly',
+    verified: true,
+    createdAt: '2023-11-15T10:00:00Z',
+    totalPages: 50,
+    optimizedPages: 35,
+  }
+];
+
+export const seedSite: Site = seedSites[0];
 
 export const seedPages: Page[] = [
   { id: 'page_1', siteId: 'site_1', url: '/', lastOptimized: '2023-10-26T10:00:00Z', score: 95, issuesCount: 1, status: PageStatus.Optimized },
@@ -88,7 +104,7 @@ export const seedPieChartData: PieChartData[] = [
 export const seedEvents: Event[] = [
     { id: 'evt_1', type: 'Index Ping', status: 'Success', timestamp: '2023-10-26T12:05:00Z', details: 'URL: /pricing' },
     { id: 'evt_2', type: 'Optimize', status: 'Success', timestamp: '2023-10-26T12:00:00Z', details: 'URL: /pricing' },
-    { id: 'evt_3', type: 'Index Ping', status: 'Success', timestamp: '2023-10-26T11:05:00Z', details: 'URL: /about' },
+    { id: 'evt_3', type: 'Crawl', status: 'Success', timestamp: '2023-10-26T11:05:00Z', details: 'Finished crawling 250 pages.' },
     { id: 'evt_4', type: 'Optimize', status: 'Failed', timestamp: '2023-10-26T11:00:00Z', details: 'URL: /about - Timeout' },
     { id: 'evt_5', type: 'Verification', status: 'Success', timestamp: '2023-10-01T10:00:00Z', details: 'Domain example.com verified' },
 ];
@@ -102,4 +118,62 @@ export const seedInvoices: Invoice[] = [
 export const seedTeamMembers: TeamMember[] = [
     { id: 'tm_1', name: 'You', email: 'owner@example.com', role: 'Owner' },
     { id: 'tm_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Admin' },
+];
+
+export const seedAiCoverageData: AiCoverageData[] = [
+    { name: 'Covered', value: 85 },
+    { name: 'Not Covered', value: 15 },
+];
+
+export const seedGscData: GscDataPoint[] = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - i));
+    return {
+        date: date.toISOString().split('T')[0],
+        clicks: 300 + Math.sin(i/4) * 50 + Math.random() * 20,
+        impressions: 8000 + Math.sin(i/2) * 1000 + Math.random() * 500,
+    };
+});
+
+export const seedPageImprovements: PageImprovementData[] = [
+    { url: '/pricing', scoreChange: 18 },
+    { url: '/about', scoreChange: 15 },
+    { url: '/', scoreChange: 12 },
+    { url: '/blog', scoreChange: 9 },
+    { url: '/faq', scoreChange: 5 },
+];
+
+
+export const seedReportsData: ReportsData = {
+    visibilityTrend: seedLineChartData,
+    aiCoverage: seedAiCoverageData,
+    gscPerformance: seedGscData,
+    pageImprovements: seedPageImprovements,
+};
+
+export const seedImprovedPages: ImprovedPage[] = [
+    {
+        pageId: 'page_1',
+        url: '/',
+        oldTitle: 'My Awesome Site',
+        newTitle: 'My Awesome Site | Homepage',
+        oldDescription: 'Welcome to my awesome site.',
+        newDescription: 'Discover the best of My Awesome Site on our official homepage. Explore our products, services, and blog.',
+    },
+    {
+        pageId: 'page_2',
+        url: '/about',
+        oldTitle: 'About',
+        newTitle: 'About Us | Our Mission and Team',
+        oldDescription: 'Learn about us.',
+        newDescription: 'Discover the story behind our company, meet the team, and learn about our mission to deliver excellence.',
+    },
+    {
+        pageId: 'page_3',
+        url: '/blog',
+        oldTitle: 'Blog',
+        newTitle: 'Official Company Blog | News & Updates',
+        oldDescription: 'Read our blog.',
+        newDescription: 'Stay up-to-date with the latest company news, product updates, and industry insights on our official blog.',
+    },
 ];

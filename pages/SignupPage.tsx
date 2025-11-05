@@ -20,7 +20,7 @@ const SignupPage: React.FC = () => {
         // try {
         //   await createUserWithEmailAndPassword(auth, email, password);
         //   login(email);
-        //   navigate('/install'); // Redirect to install after signup
+        //   navigate('/onboarding'); // Redirect to onboarding after signup
         // } catch (error) {
         //   setError('Failed to create an account. The email may already be in use.');
         // }
@@ -29,7 +29,7 @@ const SignupPage: React.FC = () => {
         setTimeout(() => {
             console.log('Account created successfully');
             login(email);
-            navigate('/install');
+            navigate('/onboarding');
             setIsLoading(false);
         }, 1000);
     };
@@ -52,14 +52,14 @@ const SignupPage: React.FC = () => {
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
                             <div className="mt-1">
-                                <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm" />
+                                <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900" />
                             </div>
                         </div>
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
                             <div className="mt-1">
-                                <input id="password" name="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm" />
+                                <input id="password" name="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900" />
                             </div>
                         </div>
 

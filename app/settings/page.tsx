@@ -6,6 +6,22 @@ import { seedSite } from '@/data/seeds';
 import { Invoice, TeamMember } from '@/lib/types';
 import Loading from '@/components/Loading';
 
+// FIX: Refactored Card component to use an interface and React.FC to resolve type errors.
+interface CardProps {
+    children: React.ReactNode;
+    title: string;
+}
+const Card: React.FC<CardProps> = ({ children, title }) => (
+  <div className="rounded-2xl border border-gray-200 shadow-sm bg-white">
+    <div className="p-6 border-b border-gray-200">
+       <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+    </div>
+    <div className="p-6">
+      {children}
+    </div>
+  </div>
+);
+
 export default function SettingsPage() {
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -26,17 +42,6 @@ export default function SettingsPage() {
         };
         fetchData();
     }, []);
-
-    const Card = ({ children, title }: { children: React.ReactNode, title: string }) => (
-      <div className="rounded-2xl border border-gray-200 shadow-sm bg-white">
-        <div className="p-6 border-b border-gray-200">
-           <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-        </div>
-        <div className="p-6">
-          {children}
-        </div>
-      </div>
-    );
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-screen"><Loading text="Loading Settings..." /></div>;

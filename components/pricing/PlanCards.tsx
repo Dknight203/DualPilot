@@ -34,7 +34,7 @@ const PlanCards: React.FC<PlanCardsProps> = ({ plans, onSelectPlan }) => {
                         <Button
                             onClick={() => onSelectPlan(plan.id)}
                             className="mt-8 w-full"
-                            variant={plan.id === 'pro' ? 'primary' : 'outline'}
+                            variant="outline"
                         >
                             {plan.id === 'enterprise' ? 'Contact Sales' : 'Choose Plan'}
                         </Button>
