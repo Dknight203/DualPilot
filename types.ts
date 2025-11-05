@@ -1,5 +1,5 @@
-// FIX: Define and export PlanId enum here to break a circular dependency.
-// Previously, types.ts imported PlanId from constants.ts, while constants.ts imported it from types.ts.
+// FIX: Defined PlanId enum here to break the circular dependency with constants.ts.
+// This was causing a "Circular definition of import alias" error.
 export enum PlanId {
   Essentials = 'essentials',
   Pro = 'pro',
@@ -136,11 +136,20 @@ export interface PageImprovementData {
     scoreChange: number;
 }
 
+export interface OptimizationActivity {
+    pageId: string;
+    url: string;
+    date: string;
+    scoreChange: number;
+    keywords: string[];
+}
+
 export interface ReportsData {
     visibilityTrend: LineChartData[];
     aiCoverage: AiCoverageData[];
     gscPerformance?: GscDataPoint[];
     pageImprovements?: PageImprovementData[];
+    optimizationActivity: OptimizationActivity[];
 }
 
 export interface ImprovedPage {

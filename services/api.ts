@@ -1,133 +1,146 @@
-import { ScanResult, LineChartData, StackedBarChartData, PieChartData, Page, Site, Event, Invoice, TeamMember, PageDetails, PageOutput, ReportsData, ImprovedPage } from '../types';
-import { seedScanResult, seedLineChartData, seedStackedBarChartData, seedPieChartData, seedPages, seedSites, seedEvents, seedInvoices, seedTeamMembers, seedPageDetails, seedReportsData, seedImprovedPages } from '../data/seeds';
+import {
+  ScanResult,
+  Site,
+  Page,
+  PageDetails,
+  PageOutput,
+  Invoice,
+  TeamMember,
+  ReportsData,
+  LineChartData,
+  StackedBarChartData,
+  PieChartData,
+  Event as AppEvent,
+  ImprovedPage,
+} from '../types';
+import {
+  seedScanResult,
+  seedSites,
+  seedPages,
+  seedPageDetails,
+  seedInvoices,
+  seedTeamMembers,
+  seedReportsData,
+  seedEvents,
+  seedImprovedPages,
+  seedLineChartData,
+  seedPieChartData,
+  seedStackedBarChartData,
+} from '../data/seeds';
 
-const simulateDelay = <T,>(data: T, delay = 500): Promise<T> => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(data);
-    }, delay);
-  });
-};
-
-// TODO: All functions in this file should be replaced with actual API calls 
-// to a backend like Supabase Edge Functions or a dedicated server.
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export const scanDomain = async (domain: string): Promise<ScanResult> => {
   console.log(`Scanning domain: ${domain}`);
-  // TODO: Implement actual call to Google AI Studio for analysis
-  return simulateDelay(seedScanResult, 2000);
+  await delay(1500);
+  return seedScanResult;
 };
 
-// --- Multi-Site ---
+export const createCheckoutSession = async (planId: string): Promise<{ checkoutUrl: string }> => {
+  console.log(`Creating checkout session for plan: ${planId}`);
+  await delay(1000);
+  return { checkoutUrl: `https://stripe.com/checkout/session_for_${planId}` };
+};
+
+export const verifyDomain = async (domain: string): Promise<{ verified: boolean; heartbeat: string | null }> => {
+  console.log(`Verifying domain: ${domain}`);
+  await delay(1000);
+  // Simulate a 50/50 chance of being verified on first try
+  const isVerified = Math.random() > 0.5;
+  return {
+    verified: isVerified,
+    heartbeat: isVerified ? new Date().toISOString() : null,
+  };
+};
+
 export const getSites = async (): Promise<Site[]> => {
-    return simulateDelay(seedSites);
+  await delay(500);
+  return seedSites;
 };
 
-export const getDashboardData = async (siteId: string) => {
+export const getDashboardData = async (siteId: string): Promise<{
+  site: Site;
+  charts: {
+    visibilityTrend: LineChartData[];
+    issuesFixed: StackedBarChartData[];
+    pageStatus: PieChartData[];
+  };
+  events: AppEvent[];
+  topImprovedPages: ImprovedPage[];
+}> => {
   console.log(`Fetching dashboard data for site: ${siteId}`);
-  // In a real app, these would be separate endpoints filtered by siteId
+  await delay(800);
   const site = seedSites.find(s => s.id === siteId) || seedSites[0];
-  return Promise.all([
-    simulateDelay(site),
-    simulateDelay(seedLineChartData),
-    simulateDelay(seedStackedBarChartData),
-    simulateDelay(seedPieChartData),
-    simulateDelay(seedEvents),
-    getTopImprovedPages()
-  ]).then(([site, line, stacked, pie, events, improvedPages]) => ({
+  return {
     site,
     charts: {
-      visibilityTrend: line,
-      issuesFixed: stacked,
-      pageStatus: pie,
+      visibilityTrend: seedLineChartData,
+      issuesFixed: seedStackedBarChartData,
+      pageStatus: seedPieChartData,
     },
-    events,
-    topImprovedPages: improvedPages,
-  }));
+    events: seedEvents,
+    topImprovedPages: seedImprovedPages.slice(0, 3),
+  };
 };
 
-export const getReportsData = async (siteId: string): Promise<ReportsData> => {
-    console.log(`Fetching reports data for site: ${siteId}`);
-    return simulateDelay(seedReportsData, 1200);
-}
-
-export const getTopImprovedPages = async (): Promise<ImprovedPage[]> => {
-    return simulateDelay(seedImprovedPages, 800);
+export const getPages = async (siteId: string, options: any): Promise<Page[]> => {
+  console.log(`Fetching pages for site: ${siteId} with options`, options);
+  await delay(600);
+  return seedPages.filter(p => p.siteId === siteId);
 };
 
-export const getPages = async (siteId: string, filters: { status?: string; path?: string; minScore?: number }): Promise<Page[]> => {
-  console.log(`Fetching pages for site ${siteId} with filters:`, filters);
-  // Basic filtering for demo purposes
-  let pages = seedPages;
-  if (filters.status) {
-    pages = pages.filter(p => p.status === filters.status);
-  }
-  if (filters.path) {
-    pages = pages.filter(p => p.url.startsWith(filters.path));
-  }
-  if (filters.minScore) {
-    pages = pages.filter(p => p.score >= filters.minScore!);
-  }
-  return simulateDelay(pages);
+export const forceRecrawl = async (pageId: string): Promise<void> => {
+  console.log(`Forcing recrawl for page: ${pageId}`);
+  await delay(500);
+};
+
+export const pingForIndex = async (pageId: string): Promise<void> => {
+  console.log(`Pinging for index for page: ${pageId}`);
+  await delay(500);
 };
 
 export const getPageDetails = async (pageId: string): Promise<PageDetails> => {
   console.log(`Fetching details for page: ${pageId}`);
-  // Find the base page and merge with detailed seed data
-  const basePage = seedPages.find(p => p.id === pageId) || seedPages[0];
-  const details = { ...seedPageDetails, ...basePage, id: pageId };
-  return simulateDelay(details);
+  await delay(700);
+  // NOTE: Returning the same details for any pageId for this demo.
+  return seedPageDetails;
 };
 
 export const optimizePage = async (pageId: string): Promise<PageOutput> => {
-    console.log(`Optimizing page: ${pageId}`);
-    // TODO: This would call Google AI Studio (Gemini API) to generate content
-    const newOutput: PageOutput = {
-        id: `out_${Math.random()}`,
-        metaTitle: "AI-Optimized Title for Your Page",
-        metaDescription: "This is a new, AI-generated meta description designed to improve click-through rates and search engine ranking by targeting relevant keywords.",
-        canonicalUrl: seedPageDetails.canonicalUrl,
-        jsonLd: { "@context": "https://schema.org", "@type": "WebPage", "name": "AI-Optimized Title" },
-        aiSummary: "A new, concise AI summary highlighting the key points of the page content for better understanding by AI assistants.",
-        modelVersion: 'gemini-2.5-flash',
-        approved: false,
-        createdAt: new Date().toISOString()
-    };
-    return simulateDelay(newOutput, 1500);
+  console.log(`Optimizing page: ${pageId}`);
+  await delay(2000);
+  const newOutput: PageOutput = {
+    id: `out_${Date.now()}`,
+    metaTitle: "AI Optimized Title for My Awesome Site",
+    metaDescription: "This is an AI-generated meta description that is perfectly optimized for search engines and user engagement, highlighting key aspects of My Awesome Site.",
+    canonicalUrl: "https://example.com/about-optimized",
+    jsonLd: { "@context": "https://schema.org", "@type": "WebPage", "name": "Optimized About Us", "description": "A new, better description." },
+    aiSummary: "Leveraging advanced AI, this summary provides a concise and compelling overview of My Awesome Site's mission and team.",
+    modelVersion: 'gemini-2.5-flash',
+    approved: false,
+    createdAt: new Date().toISOString(),
+  };
+  return newOutput;
 };
 
-// --- Per-Page Actions ---
-export const forceRecrawl = async (pageId: string): Promise<{ success: boolean }> => {
-    console.log(`Forcing recrawl for page: ${pageId}`);
-    return simulateDelay({ success: true }, 1000);
-};
-
-export const pingForIndex = async (pageId: string): Promise<{ success: boolean }> => {
-    console.log(`Pinging for indexing for page: ${pageId}`);
-    return simulateDelay({ success: true }, 700);
-};
-
-
-export const verifyDomain = async (domain: string): Promise<{ verified: boolean, heartbeat: string }> => {
-    console.log(`Verifying domain: ${domain}`);
-    return simulateDelay({ verified: true, heartbeat: new Date().toISOString() });
-};
-
-export const createCheckoutSession = async (planId: string): Promise<{ checkoutUrl: string }> => {
-    console.log(`Creating checkout session for plan: ${planId}`);
-    // TODO: Integrate with Stripe API
-    return simulateDelay({ checkoutUrl: 'https://buy.stripe.com/test_12345' });
-};
-
-export const getBillingInfo = async (): Promise<{ invoices: Invoice[], plan: Site['plan'], usage: number }> => {
-    return simulateDelay({ invoices: seedInvoices, plan: seedSites[0].plan, usage: seedSites[0].optimizedPages / seedSites[0].totalPages });
+export const getBillingInfo = async (): Promise<{ invoices: Invoice[] }> => {
+  await delay(400);
+  return { invoices: seedInvoices };
 };
 
 export const getTeamMembers = async (): Promise<TeamMember[]> => {
-    return simulateDelay(seedTeamMembers);
+  await delay(400);
+  return seedTeamMembers;
 };
 
-export const connectGsc = async (): Promise<{ success: true }> => {
-    console.log("Simulating GSC connection...");
-    return simulateDelay({ success: true }, 1500);
+export const getReportsData = async (siteId: string, days: number): Promise<ReportsData> => {
+  console.log(`Fetching reports data for site: ${siteId} for last ${days} days`);
+  await delay(1200);
+  // Here you could filter data based on 'days', for the demo we'll return the full set.
+  return seedReportsData;
+};
+
+export const connectGsc = async (): Promise<void> => {
+  console.log('Simulating GSC connection flow...');
+  await delay(1500);
 };

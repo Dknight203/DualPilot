@@ -1,4 +1,4 @@
-import { PlanId, Site, Page, PageStatus, ScanResult, LineChartData, StackedBarChartData, PieChartData, Event, Invoice, TeamMember, PageDetails, PageOutput, AiCoverageData, ReportsData, ImprovedPage, GscDataPoint, PageImprovementData } from '../types';
+import { PlanId, Site, Page, PageStatus, ScanResult, LineChartData, StackedBarChartData, PieChartData, Event, Invoice, TeamMember, PageDetails, PageOutput, AiCoverageData, ReportsData, ImprovedPage, GscDataPoint, PageImprovementData, OptimizationActivity } from '../types';
 
 export const seedSites: Site[] = [
   {
@@ -72,12 +72,12 @@ export const seedScanResult: ScanResult = {
   suggestedNextStep: 'Automate fixes with DualPilot to instantly improve your score.'
 };
 
-export const seedLineChartData: LineChartData[] = Array.from({ length: 30 }, (_, i) => {
+export const seedLineChartData: LineChartData[] = Array.from({ length: 90 }, (_, i) => {
   const date = new Date();
-  date.setDate(date.getDate() - (29 - i));
+  date.setDate(date.getDate() - (89 - i));
   return {
     date: date.toISOString().split('T')[0],
-    score: 65 + Math.sin(i / 3) * 10 + Math.random() * 5,
+    score: 65 + Math.sin(i / 5) * 10 + Math.random() * 5 - (i/20),
   };
 });
 
@@ -125,9 +125,9 @@ export const seedAiCoverageData: AiCoverageData[] = [
     { name: 'Not Covered', value: 15 },
 ];
 
-export const seedGscData: GscDataPoint[] = Array.from({ length: 30 }, (_, i) => {
+export const seedGscData: GscDataPoint[] = Array.from({ length: 90 }, (_, i) => {
     const date = new Date();
-    date.setDate(date.getDate() - (29 - i));
+    date.setDate(date.getDate() - (89 - i));
     return {
         date: date.toISOString().split('T')[0],
         clicks: 300 + Math.sin(i/4) * 50 + Math.random() * 20,
@@ -141,7 +141,22 @@ export const seedPageImprovements: PageImprovementData[] = [
     { url: '/', scoreChange: 12 },
     { url: '/blog', scoreChange: 9 },
     { url: '/faq', scoreChange: 5 },
+    { url: '/contact', scoreChange: 4 },
+    { url: '/services', scoreChange: 2 },
 ];
+
+export const seedOptimizationActivity: OptimizationActivity[] = Array.from({ length: 15 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (5 + i * 4)); // Spread out over the last ~65 days
+    const page = seedPages[i % seedPages.length];
+    return {
+        pageId: page.id,
+        url: page.url,
+        date: date.toISOString(),
+        scoreChange: 5 + Math.floor(Math.random() * 15),
+        keywords: ['ai', 'seo', 'optimization', `keyword${i}`],
+    };
+});
 
 
 export const seedReportsData: ReportsData = {
@@ -149,6 +164,7 @@ export const seedReportsData: ReportsData = {
     aiCoverage: seedAiCoverageData,
     gscPerformance: seedGscData,
     pageImprovements: seedPageImprovements,
+    optimizationActivity: seedOptimizationActivity,
 };
 
 export const seedImprovedPages: ImprovedPage[] = [
