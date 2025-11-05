@@ -84,17 +84,26 @@ const ReportsPage: React.FC = () => {
                         </Card>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <Card title="AI Assistant Coverage">
-                                <ChartAiCoverage data={reportsData.aiCoverage} />
-                            </Card>
+                            {/* Left Column */}
+                            <div className="lg:col-span-1 space-y-6">
+                                <Card title="AI Assistant Coverage">
+                                    <ChartAiCoverage data={reportsData.aiCoverage} />
+                                </Card>
+                                {reportsData.pageImprovements && (
+                                    <Card title="Top Pages by Score Improvement">
+                                        <ChartPageImprovements data={reportsData.pageImprovements} />
+                                    </Card>
+                                )}
+                            </div>
 
+                            {/* Right Column */}
                             <div className="lg:col-span-2">
                                 {isGscConnected && reportsData.gscPerformance ? (
-                                    <Card title={`Impressions vs. Clicks (GSC)`}>
+                                    <Card title={`Impressions vs. Clicks (GSC)`} className="h-full">
                                         <ChartGscPerformance data={reportsData.gscPerformance} />
                                     </Card>
                                 ) : (
-                                    <Card title="Impressions vs. Clicks">
+                                    <Card title="Impressions vs. Clicks" className="h-full">
                                         <div className="flex flex-col items-center justify-center h-full text-center p-4">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
                                             <h4 className="mt-2 font-semibold text-slate-800">Connect Google Search Console</h4>
@@ -105,12 +114,6 @@ const ReportsPage: React.FC = () => {
                                 )}
                             </div>
                         </div>
-                        
-                        {reportsData.pageImprovements && (
-                            <Card title="Top Pages by Score Improvement">
-                                <ChartPageImprovements data={reportsData.pageImprovements} />
-                            </Card>
-                        )}
 
                         <Card title="Optimization Activity">
                             <OptimizationActivityTable data={reportsData.optimizationActivity} />

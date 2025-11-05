@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import { useAuth } from '../components/auth/AuthContext';
+import OAuthButton from '../components/auth/OAuthButton';
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -16,15 +17,6 @@ const LoginPage: React.FC = () => {
         setIsLoading(true);
         setError('');
 
-        // TODO: Implement Firebase Auth login
-        // try {
-        //   await signInWithEmailAndPassword(auth, email, password);
-        //   login(email);
-        //   navigate('/dashboard');
-        // } catch (error) {
-        //   setError('Failed to log in. Please check your credentials.');
-        // }
-
         // Placeholder logic
         setTimeout(() => {
             if (email === 'test@example.com' && password === 'password') {
@@ -36,6 +28,14 @@ const LoginPage: React.FC = () => {
             }
             setIsLoading(false);
         }, 1000);
+    };
+
+    const handleOAuthLogin = (provider: string) => {
+        console.log(`Attempting to log in with ${provider}`);
+        // Placeholder: In a real app, this would trigger the OAuth flow.
+        // For the demo, we'll just log in the user to proceed.
+        login(`${provider}@example.com`);
+        navigate('/dashboard');
     };
 
     return (
@@ -52,7 +52,21 @@ const LoginPage: React.FC = () => {
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                    <form className="space-y-6" onSubmit={handleLogin}>
+                    <div className="space-y-4">
+                        <OAuthButton provider="google" onClick={handleOAuthLogin} />
+                        <OAuthButton provider="microsoft" onClick={handleOAuthLogin} />
+                    </div>
+
+                    <div className="mt-6 relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-300" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-slate-500">Or continue with email</span>
+                        </div>
+                    </div>
+
+                    <form className="mt-6 space-y-6" onSubmit={handleLogin}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
                             <div className="mt-1">

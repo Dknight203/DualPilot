@@ -14,6 +14,7 @@ import ReportsPage from './pages/ReportsPage';
 import PageDetailPage from './pages/PageDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
+import AiVisibilityPage from './pages/AiVisibilityPage'; // New Import
 import { AuthProvider } from './components/auth/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { SiteProvider } from './components/site/SiteContext';
@@ -44,6 +45,7 @@ const App: React.FC = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="onboarding" element={<OnboardingPage />} />
                 <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="dashboard/ai-visibility" element={<AiVisibilityPage />} />
                 <Route path="dashboard/reports" element={<ReportsPage />} />
                 <Route path="dashboard/page/:pageId" element={<PageDetailPage />} />
                 <Route path="settings" element={<SettingsPage />} />

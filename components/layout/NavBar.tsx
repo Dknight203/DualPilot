@@ -14,6 +14,7 @@ const NavBar: React.FC = () => {
   };
   
   const navLinkClasses = "text-sm font-medium text-gray-700 hover:text-brand-blue transition-colors";
+  const activeNavLinkClasses = "text-brand-blue font-semibold";
 
   return (
     <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200">
@@ -24,10 +25,13 @@ const NavBar: React.FC = () => {
               DualPilot
             </NavLink>
             <div className="hidden md:flex items-center space-x-6">
-              <NavLink to="/pricing" className={navLinkClasses}>Pricing</NavLink>
-              <NavLink to="/scan" className={navLinkClasses}>Free Scan</NavLink>
+              <NavLink to="/pricing" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Pricing</NavLink>
+              <NavLink to="/scan" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Free Scan</NavLink>
               {isAuthenticated && (
-                <NavLink to="/dashboard" className={navLinkClasses}>Dashboard</NavLink>
+                <>
+                  <NavLink to="/dashboard" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Dashboard</NavLink>
+                  <NavLink to="/dashboard/ai-visibility" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>AI Visibility</NavLink>
+                </>
               )}
             </div>
           </div>

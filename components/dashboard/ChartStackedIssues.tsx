@@ -27,8 +27,8 @@ const ChartStackedIssues: React.FC<ChartStackedIssuesProps> = ({ data }) => {
     const maxVal = Math.max(...data.map(d => categories.reduce((sum, cat) => sum + d[cat], 0)));
 
     return (
-        <div className="w-full h-80">
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
+        <div className="w-full">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ height: `${height}px` }}>
                 {data.map((d, i) => {
                     let yOffset = height - padding;
                     const x = padding + i * barWidth;

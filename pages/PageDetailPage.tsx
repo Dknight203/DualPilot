@@ -9,6 +9,7 @@ import KeywordEditor from '../components/pagedetail/KeywordEditor';
 import OptimizeDiffViewer from '../components/pagedetail/OptimizeDiffViewer';
 import JsonLdViewer from '../components/pagedetail/JsonLdViewer';
 import Toast from '../components/common/Toast';
+import InfoTooltip from '../components/common/InfoTooltip';
 
 const PageDetailPage: React.FC = () => {
     const { pageId } = useParams<{ pageId: string }>();
@@ -62,7 +63,7 @@ const PageDetailPage: React.FC = () => {
     if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner text="Loading Page Details..." /></div>;
     if (!page) return <div className="text-center py-20">Page not found.</div>;
 
-    const currentOutput = page.history[page.history.length-1] || {};
+    const currentOutput = page.history[page.history.length-1] || page;
 
     return (
         <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
@@ -96,7 +97,7 @@ const PageDetailPage: React.FC = () => {
                     <div className="lg:col-span-2 space-y-6">
                         {newOutput ? (
                              <Card title="Review & Approve Changes">
-                                <OptimizeDiffViewer oldOutput={currentOutput} newOutput={newOutput} />
+                                <OptimizeDiffViewer oldOutput={currentOutput} newOutput={newOutput} pageUrl={page.url} />
                                 <div className="mt-6 flex justify-end space-x-3">
                                     <Button variant="outline" onClick={() => setNewOutput(null)}>Discard</Button>
                                     <Button variant="primary" onClick={handleApprove}>Approve & Publish</Button>
@@ -104,11 +105,25 @@ const PageDetailPage: React.FC = () => {
                             </Card>
                         ) : (
                             <Card title="Current Metadata">
-                                <h3 className="font-bold">Meta Title</h3>
-                                <p className="p-2 bg-slate-100 rounded mb-2">{page.metaTitle}</p>
-                                <h3 className="font-bold">Meta Description</h3>
-                                <p className="p-2 bg-slate-100 rounded mb-4">{page.metaDescription}</p>
-                                <JsonLdViewer json={page.jsonLd} />
+                                <div className="space-y-4">
+                                    <div className="flex items-center space-x-2">
+                                        <h3 className="font-bold">Meta Title</h3>
+                                        <InfoTooltip text="The title of your page shown in search results. Crucial for attracting clicks." />
+                                    </div>
+                                    <p className="p-2 bg-slate-100 rounded">{page.metaTitle}</p>
+                                    
+                                    <div className="flex items-center space-x-2">
+                                        <h3 className="font-bold">Meta Description</h3>
+                                        <InfoTooltip text="The summary shown under your title in search results. A good description increases clicks and provides context for AI." />
+                                    </div>
+                                    <p className="p-2 bg-slate-100 rounded">{page.metaDescription}</p>
+                                    
+                                    <div className="flex items-center space-x-2">
+                                        <h3 className="font-bold">JSON-LD Schema</h3>
+                                        <InfoTooltip text="Structured data that helps search engines understand your content for rich results (e.g., reviews, prices) and provides factual data to AI assistants." />
+                                    </div>
+                                    <JsonLdViewer json={page.jsonLd} />
+                                </div>
                             </Card>
                         )}
                     </div>
