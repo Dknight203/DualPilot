@@ -17,8 +17,19 @@ interface TooltipData {
     previous?: GscDataPoint;
 }
 
+const annotationIcons = {
+    Optimization: (
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+    ),
+    Schema: (
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 12" />
+    ),
+};
+
+
 const PerformanceChart: React.FC<PerformanceChartProps> = ({ gscData, dataKey, type, color, annotations }) => {
     const [tooltip, setTooltip] = useState<{ x: number; y: number; data: TooltipData; visible: boolean } | null>(null);
+    const [annotationTooltip, setAnnotationTooltip] = useState<{ x: number; y: number; annotation: ActionAnnotation; visible: boolean } | null>(null);
     const svgRef = useRef<SVGSVGElement>(null);
 
     const { current: currentData, previous: previousData } = gscData;
@@ -44,7 +55,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ gscData, dataKey, t
             const y = getY(point[dataKey]);
             return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
         }).join(' ');
-    }, [currentData, dataKey, getX, getY]);
+    }, [currentData, dataKey]);
 
     const previousLinePath = useMemo(() => {
         if (!previousData || previousData.length === 0) return '';
@@ -53,7 +64,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ gscData, dataKey, t
             const y = getY(point[dataKey]);
             return `${i === 0 ? 'M' : 'L'} ${x},${y}`;
         }).join(' ');
-    }, [previousData, dataKey, getX, getY]);
+    }, [previousData, dataKey]);
 
 
     const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -131,6 +142,32 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ gscData, dataKey, t
                         )
                     })
                 )}
+
+                {/* Annotations */}
+                {annotations.map((annotation, i) => {
+                    const dataIndex = currentData.findIndex(d => d.date === annotation.date);
+                    if (dataIndex === -1) return null;
+
+                    const x = getX(dataIndex);
+                    const IconComponent = annotationIcons[annotation.type];
+                    
+                    return (
+                        <g key={`anno-${i}`}
+                            onMouseEnter={() => setAnnotationTooltip({ x, y: height - padding.bottom, annotation, visible: true })}
+                            onMouseLeave={() => setAnnotationTooltip(null)}
+                            className="cursor-pointer"
+                        >
+                            <line x1={x} y1={padding.top} x2={x} y2={height - padding.bottom + 4} stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 3" />
+                            <g transform={`translate(${x - 8}, ${height - padding.bottom + 4})`}>
+                                <circle r="10" fill="white" />
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="text-slate-600">
+                                    {IconComponent}
+                                </svg>
+                            </g>
+                        </g>
+                    );
+                })}
+
                 
                 {/* Tooltip visualization */}
                 {tooltip?.visible && (
@@ -141,7 +178,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ gscData, dataKey, t
                 )}
             </svg>
             
-            {/* Tooltip Info Box */}
+            {/* Data Tooltip Info Box */}
             {tooltip?.visible && (
                  <div 
                     className="absolute p-2 bg-slate-800 text-white text-xs rounded shadow-lg pointer-events-none"
@@ -157,6 +194,22 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ gscData, dataKey, t
                     {tooltip.data.previous && (
                          <p className="capitalize text-slate-300">Previous: {Math.round(tooltip.data.previous[dataKey]).toLocaleString()}</p>
                     )}
+                </div>
+            )}
+
+            {/* Annotation Tooltip Info Box */}
+            {annotationTooltip?.visible && (
+                <div 
+                    className="absolute p-2 bg-slate-800 text-white text-xs rounded shadow-lg pointer-events-none max-w-xs"
+                    style={{ 
+                        top: annotationTooltip.y - 60, 
+                        left: (annotationTooltip.x / width) * 100 + '%',
+                        transform: `translateX(-50%)`,
+                    }}
+                >
+                    <p className="font-bold">{annotationTooltip.annotation.date}</p>
+                    <p className="font-semibold text-slate-300">{annotationTooltip.annotation.type}</p>
+                    <p>{annotationTooltip.annotation.description}</p>
                 </div>
             )}
         </div>

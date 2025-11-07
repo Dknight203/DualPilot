@@ -120,6 +120,15 @@ export interface TeamMember {
     role: 'Admin' | 'Member';
 }
 
+export interface ApiKey {
+  id: string;
+  name: string;
+  key?: string; // The full key is optional, only returned on creation
+  lastFour: string;
+  createdAt: string;
+  status: 'active' | 'revoked';
+}
+
 export interface GscDataPoint {
     date: string;
     clicks: number;

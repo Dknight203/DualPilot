@@ -3,7 +3,7 @@
 import {
     ScanResult, Site, PlanId, Page, PageStatus, LineChartData, StackedBarChartData,
     PieChartData, Event, ImprovedPage, PageDetails, PageOutput, Invoice, TeamMember,
-    ReportData, GscDataPoint, AiCoverageData, ActionAnnotation, ImpactAnalysisItem
+    ApiKey, ReportData, GscDataPoint, AiCoverageData, ActionAnnotation, ImpactAnalysisItem
 } from '../types';
 import { GoogleGenAI } from '@google/genai';
 
@@ -27,6 +27,11 @@ const mockImprovedPages: ImprovedPage[] = [
     { pageId: 'page_01', url: '/blog/ai-seo-strategies', oldTitle: 'AI SEO Tips', newTitle: '7 Advanced AI SEO Strategies to Dominate in 2024', oldDescription: 'Some tips for AI SEO.', newDescription: 'Unlock the future of search with these 7 advanced AI SEO strategies. Learn how to leverage machine learning for top rankings.' },
     { pageId: 'page_02', url: '/features/visibility-score', oldTitle: 'Visibility Score', newTitle: 'What is a Visibility Score? | DualPilot Feature', oldDescription: 'Our visibility score.', newDescription: 'Discover how DualPilot\'s proprietary Visibility Score measures your site\'s health for both classic search engines and modern AI assistants.' },
     { pageId: 'page_03', url: '/pricing', oldTitle: 'Pricing', newTitle: 'Simple, Transparent Pricing | DualPilot', oldDescription: 'See our prices.', newDescription: 'Choose the plan that fits your needs. No hidden fees, ever. Start with our Essentials plan or scale with Pro and Agency.' },
+];
+
+const mockApiKeys: ApiKey[] = [
+    { id: 'key_1', name: 'CMS Integration', lastFour: 'a1b2', createdAt: '2023-10-15T10:00:00Z', status: 'active' },
+    { id: 'key_2', name: 'Reporting Script', lastFour: 'c3d4', createdAt: '2023-09-01T14:30:00Z', status: 'active' },
 ];
 
 // --- API SIMULATION ---
@@ -171,6 +176,32 @@ export const getTeamMembers = (): Promise<TeamMember[]> => {
         { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member' },
     ];
     return simulateApiCall(members);
+};
+
+export const getApiKeys = (): Promise<ApiKey[]> => {
+    return simulateApiCall(mockApiKeys);
+};
+
+export const generateApiKey = (name: string): Promise<ApiKey> => {
+    const randomString = Math.random().toString(36).substring(2, 22);
+    const newKey: ApiKey = {
+        id: `key_${Math.random()}`,
+        name,
+        key: `dp_live_${randomString}`, // The full key
+        lastFour: randomString.slice(-4),
+        createdAt: new Date().toISOString(),
+        status: 'active',
+    };
+    mockApiKeys.unshift(newKey); // Add to the beginning of the list
+    return simulateApiCall(JSON.parse(JSON.stringify(newKey)), 800);
+};
+
+export const revokeApiKey = (keyId: string): Promise<void> => {
+    const index = mockApiKeys.findIndex(k => k.id === keyId);
+    if (index > -1) {
+        mockApiKeys.splice(index, 1);
+    }
+    return simulateApiCall(undefined);
 };
 
 const generateGscData = (days: number, offset = 0, factor = 1): GscDataPoint[] => {

@@ -29,8 +29,13 @@ const LoginPage: React.FC = () => {
                 login(email);
                 localStorage.removeItem('gsc_connected'); // Ensure no GSC connection
                 navigate('/dashboard');
+            } else if (email === 'agency@example.com' && password === 'password') {
+                console.log('Logged in as Agency user');
+                login(email);
+                localStorage.setItem('gsc_connected', 'true'); // Simulate GSC connection
+                navigate('/dashboard');
             } else {
-                setError('Invalid credentials. Use test@example.com or empty@example.com with password.');
+                setError('Invalid credentials. Use test@example.com, empty@example.com, or agency@example.com with password.');
             }
             setIsLoading(false);
         }, 1000);
