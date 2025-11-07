@@ -3,7 +3,7 @@ import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface StepGscConnectProps {
-    onGscConnected: () => void;
+    onNext: () => void;
 }
 
 const GoogleIcon: React.FC = () => (
@@ -15,7 +15,14 @@ const GoogleIcon: React.FC = () => (
     </svg>
 );
 
-const StepGscConnect: React.FC<StepGscConnectProps> = ({ onGscConnected }) => {
+const InfoItem: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div>
+        <h4 className="font-semibold text-slate-700">{title}</h4>
+        <p className="text-sm text-slate-500 mt-1">{children}</p>
+    </div>
+);
+
+const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext }) => {
     const [status, setStatus] = useState<'idle' | 'connecting' | 'connected'>('idle');
 
     const handleConnect = () => {
@@ -24,17 +31,32 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ onGscConnected }) => {
         setTimeout(() => {
             localStorage.setItem('gsc_connected', 'true');
             setStatus('connected');
-            setTimeout(onGscConnected, 1500); // Move to next step after a delay
+            setTimeout(onNext, 1500); // Move to next step after a delay
         }, 2000);
     };
 
     return (
         <div className="flex flex-col items-center justify-center py-8">
             <h2 className="text-2xl font-bold text-center text-slate-900">Connect Google Search Console</h2>
-            <p className="mt-2 text-center text-slate-600 max-w-md">
-                This is a crucial step! Connecting GSC allows DualPilot to show you real-world performance data like clicks and impressions right in your reports.
+            <p className="mt-2 text-center text-slate-600 max-w-lg">
+                This optional but highly recommended step allows DualPilot to show you real-world performance data.
             </p>
             
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl text-left bg-slate-50 p-6 rounded-lg border">
+                 <InfoItem title="Why we ask">
+                    Connecting GSC is vital for providing you with real-world performance data directly from Google.
+                </InfoItem>
+                <InfoItem title="What you get">
+                    You'll see how your optimizations impact your site's clicks and impressions in your reports.
+                </InfoItem>
+                 <InfoItem title="If you skip">
+                    Your reports will not contain performance metrics like clicks, impressions, or CTR.
+                </InfoItem>
+                 <InfoItem title="Where to find it later">
+                    You can always connect this later from the Reports or Settings page for your site.
+                </InfoItem>
+            </div>
+
             <div className="mt-8">
                 {status === 'idle' && (
                     <Button size="lg" onClick={handleConnect}>
@@ -46,14 +68,14 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ onGscConnected }) => {
                  {status === 'connected' && (
                      <div className="text-center text-green-600 font-semibold text-lg animate-fade-in-up">
                         <p>✓ Successfully Connected!</p>
-                        <p className="text-sm font-normal text-slate-500">Redirecting you to the final step...</p>
+                        <p className="text-sm font-normal text-slate-500">Continuing to the next step...</p>
                      </div>
                  )}
             </div>
 
              <div className="mt-8 text-center">
                 <button
-                    onClick={onGscConnected}
+                    onClick={onNext}
                     className="text-sm font-medium text-slate-500 hover:text-slate-700 hover:underline"
                 >
                     Skip for now

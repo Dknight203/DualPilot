@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { LineChartData } from '../../types';
 
@@ -31,7 +32,7 @@ const ChartLineVisibility: React.FC<ChartLineVisibilityProps> = ({ data }) => {
   const areaData = `${pathData} L ${getX(data.length - 1)},${height - padding} L ${getX(0)},${height - padding} Z`;
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-64" id="visibility-chart">
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full">
         <defs>
             <linearGradient id="visibilityGradient" x1="0" x2="0" y1="0" y2="1">

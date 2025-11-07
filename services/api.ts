@@ -1,9 +1,8 @@
-// FIX: Populated this file with a mock API implementation to resolve module not found errors.
-
 import {
     ScanResult, Site, PlanId, Page, PageStatus, LineChartData, StackedBarChartData,
     PieChartData, Event, ImprovedPage, PageDetails, PageOutput, Invoice, TeamMember,
-    ApiKey, ReportData, GscDataPoint, AiCoverageData, ActionAnnotation, ImpactAnalysisItem
+    ApiKey, ReportData, GscDataPoint, AiCoverageData, ActionAnnotation, ImpactAnalysisItem, CmsConnection,
+    InitialOptimizations
 } from '../types';
 import { GoogleGenAI } from '@google/genai';
 
@@ -15,6 +14,9 @@ const userSites: { [key: string]: Site[] } = {
     'agency@example.com': [
         { id: 'site_456', siteName: 'Agency Client Site', domain: 'agency-client.com', plan: PlanId.Agency, optimizedPages: 450, totalPages: 1000, visibilityScore: 88, refreshPolicy: 'Daily refresh' },
         { id: 'site_789', siteName: 'Another Client Corp', domain: 'another-client.com', plan: PlanId.Agency, optimizedPages: 120, totalPages: 250, visibilityScore: 94, refreshPolicy: 'Daily refresh' },
+    ],
+    'newbie@example.com': [
+        { id: 'site_new', siteName: 'New User Site', domain: 'new-user-site.com', plan: PlanId.Pro, optimizedPages: 0, totalPages: 50, visibilityScore: 0, refreshPolicy: 'Daily refresh' }
     ],
     'empty@example.com': [],
 };
@@ -47,6 +49,9 @@ const mockTeamMembers: TeamMember[] = [
     { id: 'user_3', name: 'Mike Johnson', email: 'mike@example.com', role: 'Admin', status: 'Active' },
     { id: 'user_4', name: 'Sarah Lee', email: 'agency@example.com', role: 'Admin', status: 'Active', isOwner: true },
 ];
+
+let mockCmsConnection: CmsConnection | null = null;
+
 
 // --- API SIMULATION ---
 const simulateApiCall = <T>(data: T, delay = 500): Promise<T> => {
@@ -152,6 +157,12 @@ export const pingForIndex = (pageId: string): Promise<void> => {
     return simulateApiCall(undefined);
 };
 
+export const bulkApprovePages = (pageIds: string[]): Promise<{ success: boolean }> => {
+    console.log(`Bulk approving ${pageIds.length} pages:`, pageIds);
+    // In a real app, you'd update the status of these pages in the database.
+    return simulateApiCall({ success: true }, 1000);
+};
+
 export const getPageDetails = (pageId: string): Promise<PageDetails> => {
     const basePage = mockPages.find(p => p.id === pageId) || mockPages[0];
     const details: PageDetails = {
@@ -252,6 +263,21 @@ export const revokeApiKey = (keyId: string): Promise<void> => {
     return simulateApiCall(undefined);
 };
 
+export const getCmsConnection = (): Promise<CmsConnection | null> => {
+    return simulateApiCall(mockCmsConnection);
+};
+
+export const connectCms = (type: 'wordpress', siteUrl: string): Promise<{ success: boolean }> => {
+    mockCmsConnection = { type, siteUrl };
+    return simulateApiCall({ success: true }, 1500);
+};
+
+export const disconnectCms = (): Promise<{ success: boolean }> => {
+    mockCmsConnection = null;
+    return simulateApiCall({ success: true });
+};
+
+
 const generateGscData = (days: number, offset = 0, factor = 1): GscDataPoint[] => {
     return Array.from({ length: days }, (_, i) => {
         const date = new Date();
@@ -308,6 +334,23 @@ export const getSiteProfile = (): Promise<string> => {
     const profile = localStorage.getItem('siteProfile') || "DualPilot is a SaaS company providing an automated AI and Search visibility engine. It helps users audit pages, generate AI-ready metadata and schema, and maintain visibility across classic search engines and AI assistants.";
     return simulateApiCall(profile);
 };
+
+export const getInitialOptimizations = (): Promise<InitialOptimizations> => {
+    const result: InitialOptimizations = {
+        optimizablePages: 32,
+        examples: [
+            { url: '/blog/old-post-1', oldTitle: 'Old Post', newTitle: 'A Much Better Title for an Old Post' },
+            { url: '/services/page', oldTitle: 'Services', newTitle: 'Our Premier Services for Your Business' },
+            { url: '/about-us', oldTitle: 'About', newTitle: 'About Our Company | Our Mission and Vision' },
+        ],
+    };
+    return simulateApiCall(result, 1000);
+};
+
+export const bulkApproveOptimizations = (): Promise<{ success: boolean }> => {
+    return simulateApiCall({ success: true }, 1500);
+};
+
 
 // FIX: Correctly initialize GoogleGenAI as per guidelines.
 const ai = new GoogleGenAI({apiKey: process.env.API_KEY || ''});

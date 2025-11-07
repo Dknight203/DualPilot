@@ -3,12 +3,12 @@ import Stepper from '../components/onboarding/Stepper';
 import StepConfirmProfile from '../components/onboarding/StepConfirmProfile';
 import StepPlan from '../components/onboarding/StepPlan';
 import StepGscConnect from '../components/onboarding/StepGscConnect';
-import StepConnect from '../components/onboarding/StepConnect';
+import StepIntegrations from '../components/onboarding/StepIntegrations'; // Changed from StepConnect
 import StepScan from '../components/onboarding/StepScan';
 
 const OnboardingPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
-    const steps = ['Your Profile', 'Choose Plan', 'Connect GSC', 'Connect Site', 'First Scan'];
+    const steps = ['Your Profile', 'Choose Plan', 'Connect GSC', 'Integrations', 'First Scan']; // Updated step name
 
     const handleNextStep = () => {
         if (currentStep < steps.length) {
@@ -30,9 +30,9 @@ const OnboardingPage: React.FC = () => {
             case 2:
                 return <StepPlan onPlanSelected={handleNextStep} />;
             case 3:
-                return <StepGscConnect onGscConnected={handleNextStep} />;
+                return <StepGscConnect onNext={handleNextStep} />;
             case 4:
-                return <StepConnect onSiteConnected={handleNextStep} />;
+                return <StepIntegrations onNext={handleNextStep} />; // Changed component
             case 5:
                 return <StepScan />;
             default:

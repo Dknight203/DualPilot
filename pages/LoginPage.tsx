@@ -20,15 +20,24 @@ const LoginPage: React.FC = () => {
         try {
              // Placeholder password check
             const validPasswords = ['password'];
-            const validEmails = ['test@example.com', 'empty@example.com', 'agency@example.com', 'jane@example.com'];
+            const validEmails = ['test@example.com', 'empty@example.com', 'agency@example.com', 'jane@example.com', 'newbie@example.com'];
 
             if (validEmails.includes(email) && validPasswords.includes(password)) {
                 await login(email);
+                
+                // Set GSC connection status for demo users
                 if (email !== 'empty@example.com') {
                     localStorage.setItem('gsc_connected', 'true');
                 } else {
                     localStorage.removeItem('gsc_connected');
                 }
+
+                // Set first-login flag for the new user
+                if (email === 'newbie@example.com') {
+                    localStorage.setItem('isFirstLogin', 'true');
+                    localStorage.removeItem('dashboardTourCompleted'); // Ensure tour can run
+                }
+
                 navigate('/dashboard');
             } else {
                 throw new Error('Invalid credentials');

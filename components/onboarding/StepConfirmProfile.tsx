@@ -9,12 +9,17 @@ interface StepConfirmProfileProps {
 const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ onProfileConfirmed }) => {
     const [summary, setSummary] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [domain, setDomain] = useState(''); // Added state for domain
 
     useEffect(() => {
         // Simulate fetching and generating a summary with Gemini
+        // In a real app, this would be based on an initial crawl of the user's domain
+        const userDomain = new URLSearchParams(window.location.hash.split('?')[1]).get('domain') || 'example.com';
+        setDomain(userDomain);
+
         setIsLoading(true);
         setTimeout(() => {
-            const mockSummary = "DualPilot appears to be a SaaS company providing an automated AI and Search visibility engine. It helps users audit pages, generate AI-ready metadata and schema, and maintain visibility across classic search engines and AI assistants.";
+            const mockSummary = `This site, ${userDomain}, appears to be a SaaS company providing an automated AI and Search visibility engine. It helps users audit pages, generate AI-ready metadata and schema, and maintain visibility across classic search engines and AI assistants.`;
             setSummary(mockSummary);
             setIsLoading(false);
         }, 2000);
@@ -24,6 +29,7 @@ const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ onProfileConfir
         e.preventDefault();
         console.log('Site profile confirmed:', summary);
         localStorage.setItem('siteProfile', summary); // Save the profile
+        localStorage.setItem('onboardingDomain', domain); // Save the domain for the next step
         onProfileConfirmed();
     };
 

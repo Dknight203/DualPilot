@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Site, LineChartData, StackedBarChartData, PieChartData, Page, Event as AppEvent, ImprovedPage } from '../types';
-import { getDashboardData, getPages, forceRecrawl, pingForIndex } from '../services/api';
+import { Site, LineChartData, StackedBarChartData, PieChartData, Page, Event as AppEvent, ImprovedPage, PageStatus } from '../types';
+import { getDashboardData, getPages, forceRecrawl, pingForIndex, bulkApprovePages, bulkApproveOptimizations } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
 import StatCards from '../components/dashboard/StatCards';
 import ChartLineVisibility from '../components/dashboard/ChartLineVisibility';
@@ -17,7 +17,10 @@ import DashboardSkeleton from '../components/skeletons/DashboardSkeleton';
 import EmptyState from '../components/common/EmptyState';
 import TourStartModal from '../components/tour/TourStartModal';
 import GuidedTour from '../components/tour/GuidedTour';
+import WelcomeModal from '../components/dashboard/WelcomeModal';
 import { dashboardTourSteps } from '../data/tourSteps';
+import ConnectGscPrompt from '../components/dashboard/reports/ConnectGscPrompt';
+import GscConnectModal from '../components/dashboard/reports/GscConnectModal';
 
 const DashboardPage: React.FC = () => {
     const { activeSite, sites } = useSite();
@@ -37,21 +40,27 @@ const DashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-    // Tour State
+    // GSC State
+    const [isGscConnected, setIsGscConnected] = useState(false);
+    const [isGscModalOpen, setIsGscModalOpen] = useState(false);
+    
+    // First-time user experience state
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [showTourModal, setShowTourModal] = useState(false);
     const [isTourActive, setIsTourActive] = useState(false);
+    const [isReadyForTour, setIsReadyForTour] = useState(false);
 
     // Handle toast messages passed from redirects (e.g., from ProtectedRoute)
     useEffect(() => {
         if (location.state?.toast) {
             setToast(location.state.toast);
-            // Clear the state so the toast doesn't re-appear on refresh
             navigate(location.pathname, { replace: true });
         }
     }, [location, navigate]);
 
     const fetchDataForSite = useCallback(async (siteId: string) => {
         setIsLoading(true);
+        setIsReadyForTour(false);
         setDashboardData(null);
         setPages(null);
         try {
@@ -69,15 +78,18 @@ const DashboardPage: React.FC = () => {
         }
     }, []);
 
+    // Check GSC status and first-login flag on mount
     useEffect(() => {
-        const isNewUser = localStorage.getItem('isNewUserForTour') === 'true';
-        const hasCompletedTour = localStorage.getItem('dashboardTourCompleted') === 'true';
-        if (isNewUser && !hasCompletedTour) {
-            setShowTourModal(true);
-            localStorage.removeItem('isNewUserForTour');
+        const checkGsc = localStorage.getItem('gsc_connected') === 'true';
+        setIsGscConnected(checkGsc);
+        const isFirstLogin = localStorage.getItem('isFirstLogin') === 'true';
+        if (isFirstLogin) {
+            setShowWelcomeModal(true);
+            localStorage.removeItem('isFirstLogin');
         }
     }, []);
 
+    // Fetch data when active site changes
     useEffect(() => {
         if (activeSite) {
             fetchDataForSite(activeSite.id);
@@ -85,6 +97,14 @@ const DashboardPage: React.FC = () => {
              setIsLoading(false);
         }
     }, [activeSite, fetchDataForSite]);
+
+    // Set a flag that the UI is stable and ready for a tour after loading is complete
+    useEffect(() => {
+        if (!isLoading) {
+            const timer = setTimeout(() => setIsReadyForTour(true), 500); // Small delay to ensure render completes
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading]);
 
     const handleForceRecrawl = async (pageId: string) => {
         setToast({ message: `Requesting recrawl for page ${pageId}...`, type: 'info' });
@@ -105,16 +125,67 @@ const DashboardPage: React.FC = () => {
             setToast({ message: 'Failed to send ping.', type: 'error' });
         }
     };
+    
+    const handleBulkApprove = async (pageIds: string[]) => {
+        setToast({ message: `Approving ${pageIds.length} pages...`, type: 'info' });
+        try {
+            await bulkApprovePages(pageIds);
+            setPages(prevPages => {
+                if (!prevPages) return null;
+                return prevPages.map(page =>
+                    pageIds.includes(page.id) ? { ...page, status: PageStatus.Optimized, lastOptimized: new Date().toISOString() } : page
+                );
+            });
+            setToast({ message: `${pageIds.length} pages approved successfully.`, type: 'success' });
+        } catch {
+            setToast({ message: 'Failed to approve pages.', type: 'error' });
+        }
+    };
+    
+    // --- First-Time User Experience Handlers ---
+    const handleWelcomeModalClose = (approved: boolean = false) => {
+        setShowWelcomeModal(false);
+        if (approved) {
+             setToast({ message: 'All initial optimizations have been approved!', type: 'success' });
+        }
+        const hasCompletedTour = localStorage.getItem('dashboardTourCompleted') === 'true';
+        if (!hasCompletedTour) {
+            setShowTourModal(true);
+        }
+    };
+
+    const handleWelcomeApproveAll = async () => {
+        try {
+            await bulkApproveOptimizations();
+            handleWelcomeModalClose(true);
+        } catch {
+            setToast({ message: 'Could not approve optimizations. Please review them manually.', type: 'error' });
+            handleWelcomeModalClose(false);
+        }
+    };
 
     const startTour = () => {
-        setShowTourModal(false);
-        setIsTourActive(true);
-        localStorage.setItem('dashboardTourCompleted', 'true');
+        if (isReadyForTour) {
+            setShowTourModal(false);
+            setIsTourActive(true);
+            localStorage.setItem('dashboardTourCompleted', 'true');
+        } else {
+            setToast({ message: "Waiting for dashboard to finish loading...", type: "info" });
+        }
     };
 
     const skipTour = () => {
         setShowTourModal(false);
         localStorage.setItem('dashboardTourCompleted', 'true');
+    };
+
+    const handleGscConnectSuccess = () => {
+        setIsGscModalOpen(false);
+        setIsGscConnected(true);
+        setToast({ message: 'Google Search Console connected successfully!', type: 'success' });
+        if(activeSite) {
+            fetchDataForSite(activeSite.id);
+        }
     };
 
     if (isLoading) {
@@ -141,8 +212,11 @@ const DashboardPage: React.FC = () => {
 
     return (
         <>
+            {showWelcomeModal && <WelcomeModal onApproveAll={handleWelcomeApproveAll} onClose={() => handleWelcomeModalClose(false)} />}
             {showTourModal && <TourStartModal onStart={startTour} onSkip={skipTour} />}
-            {isTourActive && <GuidedTour steps={dashboardTourSteps} onEnd={() => setIsTourActive(false)} />}
+            {isTourActive && <GuidedTour steps={dashboardTourSteps} onEnd={() => setIsTourActive(false)} isGscConnected={isGscConnected} />}
+            {isGscModalOpen && <GscConnectModal onClose={() => setIsGscModalOpen(false)} onSuccess={handleGscConnectSuccess} />}
+            
             <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
                 <div className="max-w-7xl mx-auto">
@@ -163,7 +237,13 @@ const DashboardPage: React.FC = () => {
     
                     <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <Card title="Visibility Score Trend (30 Days)" className="lg:col-span-2" id="visibility-chart-card">
-                            <ChartLineVisibility data={dashboardData.charts.visibilityTrend} />
+                           {isGscConnected ? (
+                                <ChartLineVisibility data={dashboardData.charts.visibilityTrend} />
+                            ) : (
+                                <div className="p-6">
+                                    <ConnectGscPrompt onConnectClick={() => setIsGscModalOpen(true)} />
+                                </div>
+                            )}
                         </Card>
                          <Card title="Page Statuses">
                             <ChartPieStatus data={dashboardData.charts.pageStatus} />
@@ -183,6 +263,7 @@ const DashboardPage: React.FC = () => {
                                     pages={pages}
                                     onForceRecrawl={handleForceRecrawl}
                                     onPingForIndex={handlePingForIndex}
+                                    onBulkApprove={handleBulkApprove}
                                 />
                             ) : (
                                  <EmptyState

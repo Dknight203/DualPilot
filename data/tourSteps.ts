@@ -2,6 +2,8 @@ export interface TourStep {
     elementId: string;
     title: string;
     content: string;
+    titleNoGsc?: string;
+    contentNoGsc?: string;
 }
 
 export const dashboardTourSteps: TourStep[] = [
@@ -16,12 +18,14 @@ export const dashboardTourSteps: TourStep[] = [
         content: 'See which pages have benefited most from AI optimization. We show you the before-and-after for meta titles and descriptions that have been recently improved.',
     },
     {
-        elementId: 'visibility-chart-card',
+        elementId: 'visibility-chart',
         title: 'Track Your Visibility Over Time',
-        content: 'This chart shows your average Visibility Score across all pages. Watch it climb as DualPilot continues to optimize your site!',
+        content: 'This chart shows your average Visibility Score across all pages, powered by your Google Search Console data. Watch it climb as DualPilot continues to optimize your site!',
+        titleNoGsc: 'Unlock Your Performance Data',
+        contentNoGsc: "This is where your performance chart will appear. Connect Google Search Console to unlock this view and track your real-world clicks and impressions over time."
     },
     {
-        elementId: 'pages-table-card',
+        elementId: 'pages-table',
         title: 'Manage Your Pages',
         content: "Here's a list of all the pages we've found on your site. You can view details, manually trigger a new optimization, or ping search engines for re-indexing.",
     },

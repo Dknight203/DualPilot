@@ -183,3 +183,19 @@ export interface ReportData {
     annotations: ActionAnnotation[];
     impactAnalysis: ImpactAnalysisItem[];
 }
+
+export interface CmsConnection {
+    type: 'wordpress';
+    siteUrl: string;
+}
+
+export interface OptimizationExample {
+    url: string;
+    oldTitle: string;
+    newTitle: string;
+}
+
+export interface InitialOptimizations {
+    optimizablePages: number;
+    examples: OptimizationExample[];
+}

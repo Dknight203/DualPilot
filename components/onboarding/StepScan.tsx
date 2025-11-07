@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 
+
 const StatusItem: React.FC<{ text: string; status: 'pending' | 'active' | 'complete' }> = ({ text, status }) => {
     const getStatusIcon = () => {
         if (status === 'complete') {
@@ -47,36 +48,37 @@ const StepScan: React.FC = () => {
     }, []);
 
     const handleGoToDashboard = () => {
-        // Set a flag to trigger the tour on the first visit
-        localStorage.setItem('isNewUserForTour', 'true');
+        // This flag will trigger the welcome modal on the dashboard
+        localStorage.setItem('isFirstLogin', 'true');
         navigate('/dashboard');
     };
-
-    return (
-        <div className="flex flex-col items-center justify-center py-8">
-            <h2 className="text-2xl font-bold text-center text-slate-900">Running First Scan</h2>
-            <p className="mt-2 text-center text-slate-600">
-                We're analyzing your site to establish your baseline Visibility Score. This can take a minute.
-            </p>
-            
-            <div className="mt-8 space-y-6 w-full max-w-xs">
-                <StatusItem text="Crawling Site..." status={scanProgress >= 25 ? 'complete' : (scanProgress >= 0 ? 'active' : 'pending')} />
-                <StatusItem text="Rewriting Metadata..." status={scanProgress >= 60 ? 'complete' : (scanProgress >= 25 ? 'active' : 'pending')} />
-                <StatusItem text="Calculating Score..." status={scanProgress >= 90 ? 'complete' : (scanProgress >= 60 ? 'active' : 'pending')} />
-                <StatusItem text="Scan Complete" status={scanProgress >= 100 ? 'complete' : 'pending'} />
+    
+    const renderScanProgress = () => (
+        <div className="max-w-md mx-auto space-y-6">
+            <StatusItem text="Connecting to site..." status={scanProgress >= 25 ? 'complete' : 'active'} />
+            <StatusItem text="Crawling pages..." status={scanProgress >= 60 ? 'complete' : (scanProgress >= 25 ? 'active' : 'pending')} />
+            <StatusItem text="Analyzing content..." status={scanProgress >= 90 ? 'complete' : (scanProgress >= 60 ? 'active' : 'pending')} />
+            <StatusItem text="Generating optimizations..." status={scanProgress === 100 ? 'complete' : (scanProgress >= 90 ? 'active' : 'pending')} />
+        </div>
+    );
+    
+    const renderScanComplete = () => (
+        <div className="text-center animate-fade-in-up">
+            <h3 className="text-xl font-semibold text-green-600">Scan Complete!</h3>
+            <p className="mt-2 text-slate-600">Your site has been analyzed. Let's head to your dashboard to see the results.</p>
+            <div className="mt-6">
+                <Button onClick={handleGoToDashboard} size="lg">
+                    Go to Dashboard
+                </Button>
             </div>
-
-            {scanProgress === 100 && (
-                <div className="mt-10 animate-fade-in-up">
-                    <h3 className="text-xl font-bold text-center text-green-600">Your site is ready!</h3>
-                    <p className="mt-1 text-center text-slate-600">Let's see your new dashboard and start optimizing.</p>
-                    <div className="mt-4 text-center">
-                        <Button size="lg" onClick={handleGoToDashboard}>
-                            Go to Dashboard
-                        </Button>
-                    </div>
-                </div>
-            )}
+        </div>
+    );
+    
+    return (
+        <div className="text-center py-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Running First Scan</h2>
+            <p className="text-slate-600 mb-8">Our AI is analyzing your site. This may take a few minutes...</p>
+            {scanProgress < 100 ? renderScanProgress() : renderScanComplete()}
         </div>
     );
 };
