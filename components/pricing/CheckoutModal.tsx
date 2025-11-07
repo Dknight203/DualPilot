@@ -36,7 +36,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ planId, onClose }) => {
   if (!plan) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity flex items-center justify-center z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity flex items-center justify-center z-[60]" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div className="bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
         <div>
           <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">

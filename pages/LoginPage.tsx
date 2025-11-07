@@ -22,9 +22,15 @@ const LoginPage: React.FC = () => {
             if (email === 'test@example.com' && password === 'password') {
                 console.log('Logged in successfully');
                 login(email);
+                localStorage.setItem('gsc_connected', 'true'); // Simulate GSC connection
+                navigate('/dashboard');
+            } else if (email === 'empty@example.com' && password === 'password') {
+                console.log('Logged in successfully');
+                login(email);
+                localStorage.removeItem('gsc_connected'); // Ensure no GSC connection
                 navigate('/dashboard');
             } else {
-                setError('Invalid credentials. Use test@example.com and password.');
+                setError('Invalid credentials. Use test@example.com or empty@example.com with password.');
             }
             setIsLoading(false);
         }, 1000);
@@ -35,6 +41,7 @@ const LoginPage: React.FC = () => {
         // Placeholder: In a real app, this would trigger the OAuth flow.
         // For the demo, we'll just log in the user to proceed.
         login(`${provider}@example.com`);
+        localStorage.setItem('gsc_connected', 'true'); // Simulate GSC for OAuth demo
         navigate('/dashboard');
     };
 

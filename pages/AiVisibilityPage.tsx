@@ -1,114 +1,173 @@
-import React, { useState, useCallback } from 'react';
-import { GoogleGenAI } from '@google/genai';
-import { useSite } from '../components/site/SiteContext';
-import { getPages } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { Page } from '../types';
+import { getAiVisibilityData, generateAiSummary, getSiteProfile } from '../services/api';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import InfoTooltip from '../components/common/InfoTooltip';
+import Playbook from '../components/aivisibility/Playbook';
+import Toast from '../components/common/Toast';
+import ScoreGaugeSection from '../components/aivisibility/ScoreGaugeSection';
+import EditProfileModal from '../components/aivisibility/EditProfileModal';
 
 const AiVisibilityPage: React.FC = () => {
-    const { activeSite } = useSite();
-    const [query, setQuery] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [aiResponse, setAiResponse] = useState<string | null>(null);
+    const [pages, setPages] = useState<Page[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-    const handleSimulation = useCallback(async () => {
-        if (!activeSite || !query) return;
-        setIsLoading(true);
-        setError(null);
-        setAiResponse(null);
+    // Simulator State
+    const [mode, setMode] = useState<'site' | 'page'>('site');
+    const [selectedPageId, setSelectedPageId] = useState<string>('');
+    const [siteProfile, setSiteProfile] = useState<string>('');
+    const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+    const [prompt, setPrompt] = useState('');
+    const [aiResponse, setAiResponse] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const data = await getAiVisibilityData();
+                setPages(data.pages);
+                if (data.pages.length > 0) {
+                    setSelectedPageId(data.pages[0].id);
+                }
+                setSiteProfile(data.siteProfile);
+            } catch (error) {
+                console.error("Failed to load AI visibility data", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleGenerate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!prompt) return;
+        setIsGenerating(true);
+        setAiResponse('');
 
         try {
-            // 1. Fetch pages to get AI summaries
-            const pages = await getPages(activeSite.id, {});
-            const contextContent = pages
-                .map(p => `URL: ${p.url}\nScore: ${p.score}\nAI Summary: (This is a pre-generated summary for the page content)`)
-                .join('\n\n');
-            
-            // 2. Call Gemini API to generate a simulated response
-            if (!process.env.API_KEY) {
-                console.warn("API_KEY environment variable not set. Using mock AI response.");
-                setTimeout(() => {
-                    setAiResponse(`Based on the content from ${activeSite.siteName}, here's an answer to your query about "${query}". The site provides comprehensive services and information which you can explore further on their main pages.`);
-                    setIsLoading(false);
-                }, 1500);
-                return;
-            }
-
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            const prompt = `
-                You are simulating an AI assistant's response. A user is asking a question to a search engine. 
-                Your answer should be based ONLY on the provided content from the website '${activeSite.siteName}'.
-                Do not use any external knowledge.
-                Synthesize the provided page summaries into a helpful, conversational answer to the user's query.
-                
-                USER QUERY: "${query}"
-
-                WEBSITE CONTENT:
-                ---
-                ${contextContent}
-                ---
-
-                Simulated AI Response:
-            `;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
-
-            setAiResponse(response.text);
-
-        } catch (err) {
-            console.error(err);
-            setError('Failed to generate AI response. Please try again.');
+             const response = await generateAiSummary(prompt);
+             setAiResponse(response);
+        } catch (error) {
+            console.error("Error generating AI summary", error);
+            setAiResponse('Sorry, something went wrong. Please check your API key and try again.');
         } finally {
-            setIsLoading(false);
+            setIsGenerating(false);
         }
+    };
+    
+    const handleAutomatePlaybook = (guideTitle: string, pageId: string) => {
+        setToast({ message: `Generating schema for page ${pageId}...`, type: 'info'});
+        setTimeout(() => {
+            setToast({ message: `Schema for page ${pageId} has been generated!`, type: 'success'});
+        }, 2000);
+    };
 
-    }, [activeSite, query]);
+    const handleSaveProfile = (newProfile: string) => {
+        setSiteProfile(newProfile);
+        localStorage.setItem('siteProfile', newProfile);
+        setIsEditProfileModalOpen(false);
+        setToast({ message: 'Site profile updated!', type: 'success'});
+    };
+    
+    const getPlaceholder = () => {
+        if (mode === 'page') {
+            const selectedPage = pages.find(p => p.id === selectedPageId);
+            return selectedPage?.url.includes('blog') 
+                ? "e.g., 'summarize this blog post' or 'what are its key takeaways?'"
+                : "e.g., 'what services are offered on this page?'";
+        }
+        return "e.g., Analyze top competitors for 'AI-powered SEO tools' and identify content gaps.";
+    };
 
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-screen"><LoadingSpinner text="Loading AI Visibility Engine..." /></div>;
+    }
 
     return (
         <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
-            <div className="max-w-4xl mx-auto">
-                <div className="text-center">
-                    <h1 className="text-3xl font-bold text-slate-900">AI Visibility Simulator</h1>
-                    <p className="mt-2 text-slate-600">
-                        See how your site's optimized content might appear in AI-powered search answers.
-                    </p>
+             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+             {isEditProfileModalOpen && (
+                <EditProfileModal
+                    currentProfile={siteProfile}
+                    onSave={handleSaveProfile}
+                    onClose={() => setIsEditProfileModalOpen(false)}
+                />
+             )}
+            <div className="max-w-7xl mx-auto space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">AI Visibility Engine</h1>
+                    <p className="mt-2 text-slate-600">Understand and improve how your site appears in AI-powered search and conversational assistants.</p>
                 </div>
+                
+                <ScoreGaugeSection score={78} />
 
-                <Card className="mt-8">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Ask a question, e.g., 'what services do you offer?'"
-                            className="flex-grow block w-full px-4 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900"
-                        />
-                        <Button onClick={handleSimulation} isLoading={isLoading} disabled={!query || isLoading}>
-                            Simulate Response
-                        </Button>
+                <Card title="Generative AI Research Assistant">
+                    <div className="mb-4 flex items-center border-b border-slate-200">
+                        <button onClick={() => setMode('site')} className={`px-4 py-2 text-sm font-medium ${mode === 'site' ? 'border-b-2 border-accent-default text-accent-default' : 'text-slate-500 hover:text-slate-700'}`}>Site-Wide</button>
+                        <button onClick={() => setMode('page')} className={`px-4 py-2 text-sm font-medium ${mode === 'page' ? 'border-b-2 border-accent-default text-accent-default' : 'text-slate-500 hover:text-slate-700'}`}>Page-Specific</button>
                     </div>
-                </Card>
 
-                <div className="mt-6">
-                    {isLoading && (
-                        <div className="flex justify-center items-center h-48">
-                            <LoadingSpinner text="Generating AI Response..." />
+                    {mode === 'site' && (
+                        <div className="mb-4">
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="block text-sm font-medium text-slate-700">Site Profile Context</label>
+                                <Button variant="outline" size="sm" onClick={() => setIsEditProfileModalOpen(true)}>Edit</Button>
+                            </div>
+                            <div className="text-sm p-3 bg-slate-50 rounded-md border border-slate-200 text-slate-600">{siteProfile}</div>
                         </div>
                     )}
-                    {error && <p className="text-center text-red-500">{error}</p>}
-                    {aiResponse && (
-                        <Card title="Simulated AI Response">
-                            <div className="prose prose-slate max-w-none">
-                                <p>{aiResponse}</p>
-                            </div>
-                        </Card>
+
+                    {mode === 'page' && (
+                        <div className="mb-4">
+                            <label htmlFor="page-select" className="block text-sm font-medium text-slate-700 mb-1">Select a Page</label>
+                            <select id="page-select" value={selectedPageId} onChange={e => setSelectedPageId(e.target.value)} className="w-full border-slate-300 rounded-md text-sm bg-white text-slate-900">
+                                {pages.map(p => <option key={p.id} value={p.id}>{p.url}</option>)}
+                            </select>
+                        </div>
                     )}
+
+                    <form onSubmit={handleGenerate} className="space-y-4">
+                         <div>
+                            <label htmlFor="ai-prompt" className="sr-only">Your Query</label>
+                            <textarea
+                                id="ai-prompt"
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                rows={3}
+                                className="flex-grow block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-accent-default focus:border-accent-default bg-white text-slate-900"
+                                placeholder={getPlaceholder()}
+                                disabled={isGenerating}
+                            />
+                        </div>
+                        <div className="text-right">
+                            <Button type="submit" isLoading={isGenerating} disabled={!prompt}>
+                                Generate
+                            </Button>
+                        </div>
+                    </form>
+
+                    {isGenerating && <div className="mt-4 pt-4 border-t border-slate-200"><LoadingSpinner text="AI is thinking..." /></div>}
+
+                    {aiResponse && (
+                        <div className="mt-4 pt-4 border-t border-slate-200">
+                            <div className="prose prose-slate max-w-none text-slate-700">
+                                <pre className="whitespace-pre-wrap font-sans bg-slate-50 p-4 rounded-md text-sm leading-relaxed">{aiResponse}</pre>
+                            </div>
+                        </div>
+                    )}
+                </Card>
+
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <h2 className="text-3xl font-bold text-slate-900">AI Visibility Playbook</h2>
+                        <InfoTooltip text="A curated list of actionable guides to improve your schema, content, and technical setup for AI assistants." />
+                    </div>
+                   <Playbook pages={pages} onAutomate={handleAutomatePlaybook} />
                 </div>
             </div>
         </div>

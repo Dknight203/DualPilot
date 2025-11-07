@@ -23,7 +23,7 @@ const StatCards: React.FC<StatCardsProps> = ({ site }) => {
     else if (usagePercent > 75) usageColor = 'bg-yellow-500';
 
     return (
-        <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div id="stat-cards-container" className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Avg. Visibility Score" value="91" subtext="Across all optimized pages" />
             <StatCard title="Pages Optimized" value={`${site.optimizedPages} / ${site.totalPages}`}>
                 <div className="w-full bg-slate-200 rounded-full h-2.5 mt-2">

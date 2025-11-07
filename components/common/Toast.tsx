@@ -12,7 +12,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const baseClasses = 'fixed top-5 right-5 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden';
+  const baseClasses = 'fixed top-5 right-5 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden z-[100]';
   const typeClasses = {
     success: 'bg-green-50 border-green-400 text-green-800',
     error: 'bg-red-50 border-red-400 text-red-800',

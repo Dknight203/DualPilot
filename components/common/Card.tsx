@@ -4,11 +4,14 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   title?: string;
+  interactive?: boolean;
 }
 
-const Card: React.FC<CardProps> = ({ children, className = '', title }) => {
+const Card: React.FC<CardProps> = ({ children, className = '', title, interactive = false }) => {
+  const interactiveClasses = interactive ? 'card-interactive' : '';
+  
   return (
-    <div className={`bg-white shadow-sm rounded-2xl border border-slate-200 overflow-hidden flex flex-col ${className}`}>
+    <div className={`bg-white shadow-sm rounded-2xl border border-slate-200 overflow-hidden flex flex-col ${interactiveClasses} ${className}`}>
       {title && (
         <div className="px-6 py-4 border-b border-slate-200">
           <h3 className="text-lg leading-6 font-bold text-slate-900">{title}</h3>

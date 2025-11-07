@@ -1,84 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { ReportsData } from '../../../types';
+
+import React from 'react';
 import Card from '../../common/Card';
-import LoadingSpinner from '../../common/LoadingSpinner';
-import { GoogleGenAI } from '@google/genai';
 
 interface AiSummaryProps {
-    reportsData: ReportsData;
-    days: number;
+    summary: string;
 }
 
-const AiSummary: React.FC<AiSummaryProps> = ({ reportsData, days }) => {
-    const [summary, setSummary] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const generateSummary = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                if (!process.env.API_KEY) {
-                    // Fallback for demo if API key is not set
-                    console.warn("API_KEY environment variable not set. Using mock summary.");
-                    const daysText = days === 0 ? 'all time' : `the last ${days} days`;
-                    setSummary(`Over ${daysText}, visibility has shown a positive trend. AI coverage is strong at ${reportsData.aiCoverage.find(d => d.name === 'Covered')?.value}%. Key improvements were seen on pages like ${reportsData.pageImprovements?.[0]?.url}.`);
-                    return;
-                }
-
-                // FIX: Use new GoogleGenAI({apiKey: process.env.API_KEY}) as per guidelines.
-                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-                
-                const dataSummary = JSON.stringify({
-                    visibilityTrend: `Trend over last ${days} days with starting score ${reportsData.visibilityTrend[0].score} and ending score ${reportsData.visibilityTrend[reportsData.visibilityTrend.length - 1].score}.`,
-                    aiCoverage: reportsData.aiCoverage,
-                    gscPerformance: reportsData.gscPerformance ? `GSC data is available.` : `GSC data is not connected.`,
-                    topPageImprovement: reportsData.pageImprovements?.[0],
-                    optimizationActivityCount: reportsData.optimizationActivity.length,
-                });
-
-                const prompt = `
-                    You are an expert SEO analyst. Provide a brief, insightful summary (2-3 sentences) of the following website performance data for a client report. 
-                    Be positive but realistic. Highlight one key achievement and one area to watch.
-                    Data: ${dataSummary}
-                `;
-
-                // FIX: Use ai.models.generateContent as per guidelines.
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash',
-                    contents: prompt,
-                });
-
-                // FIX: Use response.text to get the text output.
-                setSummary(response.text);
-
-            } catch (err) {
-                console.error("Failed to generate AI summary", err);
-                setError("Could not generate AI summary. Please check your API key.");
-                // Provide a fallback summary on error
-                const daysText = days === 0 ? 'the period' : `the last ${days} days`;
-                setSummary(`An error occurred while generating the summary. Based on the data, the site's visibility trend over ${daysText} appears to be generally positive.`);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        generateSummary();
-    }, [reportsData, days]);
-
+const AiSummary: React.FC<AiSummaryProps> = ({ summary }) => {
     return (
         <Card title="AI-Generated Summary">
-            {isLoading ? (
-                <div className="flex items-center space-x-2">
-                    <LoadingSpinner size="sm" />
-                    <p className="text-slate-500">Generating insights with Gemini...</p>
+            <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-r from-accent-start to-accent-end text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                    </div>
                 </div>
-            ) : error ? (
-                <p className="text-red-500">{error}</p>
-            ) : (
-                <p className="text-slate-700 leading-relaxed">{summary}</p>
-            )}
+                <div className="prose prose-slate max-w-none text-slate-600">
+                    <p>{summary}</p>
+                </div>
+            </div>
         </Card>
     );
 };

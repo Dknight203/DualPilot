@@ -6,7 +6,7 @@ interface InfoTooltipProps {
 
 const InfoTooltip: React.FC<InfoTooltipProps> = ({ text }) => {
   return (
-    <div className="group relative flex items-center">
+    <div className="group relative flex items-center z-50">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="h-5 w-5 text-slate-400 cursor-pointer"

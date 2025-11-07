@@ -15,6 +15,14 @@ const statusColors: Record<PageStatus, string> = {
   [PageStatus.Failed]: 'bg-red-100 text-red-800',
 };
 
+const ActionMenuItem: React.FC<{ title: string; description: string; onClick: () => void; }> = ({ title, description, onClick }) => (
+    <button onClick={onClick} className="text-slate-700 block w-full text-left px-4 py-2 hover:bg-slate-100" role="menuitem">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs text-slate-500 whitespace-normal">{description}</p>
+    </button>
+);
+
+
 const ActionsMenu: React.FC<{ page: Page; onForceRecrawl: (pageId: string) => void; onPingForIndex: (pageId: string) => void; }> = ({ page, onForceRecrawl, onPingForIndex }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -47,11 +55,23 @@ const ActionsMenu: React.FC<{ page: Page; onForceRecrawl: (pageId: string) => vo
                 </svg>
             </button>
             {isOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                <div className="origin-top-right absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                     <div className="py-1" role="menu" aria-orientation="vertical">
-                        <button onClick={() => handleAction(() => navigate(`/dashboard/page/${page.id}`))} className="text-slate-700 block w-full text-left px-4 py-2 text-sm hover:bg-slate-100" role="menuitem">View / Optimize</button>
-                        <button onClick={() => handleAction(() => onForceRecrawl(page.id))} className="text-slate-700 block w-full text-left px-4 py-2 text-sm hover:bg-slate-100" role="menuitem">Force Recrawl</button>
-                        <button onClick={() => handleAction(() => onPingForIndex(page.id))} className="text-slate-700 block w-full text-left px-4 py-2 text-sm hover:bg-slate-100" role="menuitem">Ping for Indexing</button>
+                        <ActionMenuItem 
+                            title="View / Optimize" 
+                            description="Go to the page editor for details and AI optimizations."
+                            onClick={() => handleAction(() => navigate(`/dashboard/page/${page.id}`))} 
+                        />
+                         <ActionMenuItem 
+                            title="Force Recrawl" 
+                            description="Ask our bots to look at this page again for recent changes."
+                            onClick={() => handleAction(() => onForceRecrawl(page.id))} 
+                        />
+                         <ActionMenuItem 
+                            title="Ping for Indexing" 
+                            description="Tell search engines this page has been updated and is ready."
+                            onClick={() => handleAction(() => onPingForIndex(page.id))} 
+                        />
                     </div>
                 </div>
             )}

@@ -17,7 +17,7 @@ const MetaDiff: React.FC<{ label: string; oldValue: string; newValue: string }> 
 
 const ImprovementCard: React.FC<ImprovementCardProps> = ({ page }) => {
     return (
-        <Card>
+        <Card interactive={true}>
             <div className="flex flex-col h-full">
                 <div className="flex-grow">
                     <Link to={`/dashboard/page/${page.pageId}`} className="font-bold text-slate-800 hover:text-accent-default transition-colors truncate">

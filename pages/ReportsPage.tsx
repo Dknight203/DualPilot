@@ -1,127 +1,119 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { ReportsData } from '../types';
-import { getReportsData, connectGsc } from '../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { generatePdfReport } from '../services/pdfGenerator';
+import { getReportData } from '../services/api';
+import { ReportData } from '../types';
 import { useSite } from '../components/site/SiteContext';
-import LoadingSpinner from '../components/common/LoadingSpinner';
 import Card from '../components/common/Card';
-import Button from '../components/common/Button';
-import ChartLineVisibility from '../components/dashboard/ChartLineVisibility';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 import ChartAiCoverage from '../components/dashboard/reports/ChartAiCoverage';
-import ChartGscPerformance from '../components/dashboard/reports/ChartGscPerformance';
 import ChartPageImprovements from '../components/dashboard/reports/ChartPageImprovements';
-import ReportsControls from '../components/dashboard/reports/ReportsControls';
 import AiSummary from '../components/dashboard/reports/AiSummary';
 import OptimizationActivityTable from '../components/dashboard/reports/OptimizationActivityTable';
 import GeoInsightsPlaceholder from '../components/dashboard/reports/GeoInsightsPlaceholder';
+import ReportsControls from '../components/dashboard/reports/ReportsControls';
+import ComparisonStatCards from '../components/dashboard/reports/ComparisonStatCards';
+import ConnectGscPrompt from '../components/dashboard/reports/ConnectGscPrompt';
+import GscPerformanceSection from '../components/dashboard/reports/GscPerformanceSection';
+import Toast from '../components/common/Toast';
 
 const ReportsPage: React.FC = () => {
     const { activeSite } = useSite();
-    const [reportsData, setReportsData] = useState<ReportsData | null>(null);
+    const [reportData, setReportData] = useState<ReportData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false);
     const [isGscConnected, setIsGscConnected] = useState(false);
-    const [isConnecting, setIsConnecting] = useState(false);
-    const [dateRange, setDateRange] = useState<number>(30); // Default to 30 days
-
-    const fetchData = useCallback(async (siteId: string, days: number) => {
-        setIsLoading(true);
-        try {
-            const data = await getReportsData(siteId, days);
-            setReportsData(data);
-        } catch (error) {
-            console.error("Failed to fetch reports data", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const reportContentRef = useRef<HTMLDivElement>(null);
+    const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>(() => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 29);
+        return { start, end };
+    });
+    const [compare, setCompare] = useState(true);
 
     useEffect(() => {
-        if (activeSite) {
-            fetchData(activeSite.id, dateRange);
-        }
-    }, [activeSite, dateRange, fetchData]);
+        const checkGsc = localStorage.getItem('gsc_connected') === 'true';
+        setIsGscConnected(checkGsc);
 
-    const handleConnectGsc = async () => {
-        setIsConnecting(true);
-        try {
-            await connectGsc();
-            setIsGscConnected(true);
-        } catch (error) {
-            console.error("Failed to connect GSC", error);
-        } finally {
-            setIsConnecting(false);
+        const fetchData = async () => {
+            setIsLoading(true);
+            try {
+                const data = await getReportData(dateRange, compare);
+                setReportData(data);
+            } catch (error) {
+                console.error("Failed to load report data", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [dateRange, compare]);
+    
+    const handleExport = async () => {
+        if (!reportContentRef.current || !activeSite) {
+            setToast({ message: 'Could not export report. Content not found.', type: 'error' });
+            return;
         }
-    };
-
-    if (!activeSite) {
-        return <div className="flex justify-center items-center h-screen"><LoadingSpinner text="Loading Reports..." /></div>;
+        setIsExporting(true);
+        await generatePdfReport(reportContentRef.current, activeSite.siteName, activeSite.plan);
+        setIsExporting(false);
     }
     
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-screen"><LoadingSpinner text="Generating Report..." /></div>;
+    }
+
+    if (!reportData) {
+        return <div className="text-center py-20">Could not load report data.</div>;
+    }
+
     return (
         <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <div className="max-w-7xl mx-auto">
-                <div className="mb-6">
-                    <Link to="/dashboard" className="text-accent-default hover:underline mb-4 inline-block">&larr; Back to Dashboard</Link>
-                    <h1 className="text-3xl font-bold text-slate-900">Reports & Insights for {activeSite.siteName}</h1>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
+                    <ReportsControls 
+                        dateRange={dateRange}
+                        setDateRange={setDateRange}
+                        compare={compare}
+                        setCompare={setCompare}
+                        onExport={handleExport}
+                        isExporting={isExporting}
+                    />
                 </div>
+                
+                {/* This ref captures the content for PDF export */}
+                <div ref={reportContentRef} className="space-y-8 mt-8 bg-slate-100">
+                    <AiSummary summary={reportData.summary} />
 
-                <ReportsControls 
-                    selectedRange={dateRange} 
-                    onRangeChange={setDateRange} 
-                    onDownload={() => alert('PDF report download simulated!')} 
-                />
-
-                {isLoading ? (
-                     <div className="flex justify-center items-center h-64"><LoadingSpinner text="Generating Report..." /></div>
-                ) : !reportsData ? (
-                    <div className="text-center py-20">Failed to load reports data. Please try again.</div>
-                ) : (
-                    <div className="space-y-6 mt-6">
-                        <AiSummary reportsData={reportsData} days={dateRange} />
-                        
-                        <Card title={`Visibility Score Trend (${dateRange === 0 ? 'All Time' : `Last ${dateRange} Days`})`}>
-                            <ChartLineVisibility data={reportsData.visibilityTrend} />
+                    {compare && <ComparisonStatCards gscData={reportData.gscPerformance} aiCoverageData={reportData.aiCoverage} />}
+                    
+                    {isGscConnected ? (
+                         <GscPerformanceSection 
+                            currentData={reportData.gscPerformance.current}
+                            previousData={compare ? reportData.gscPerformance.previous : undefined}
+                         />
+                    ) : (
+                        <ConnectGscPrompt />
+                    )}
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                         <Card title="AI Schema Coverage">
+                            <ChartAiCoverage data={reportData.aiCoverage.current} />
                         </Card>
-                        
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Left Column */}
-                            <div className="lg:col-span-1 space-y-6">
-                                <Card title="AI Assistant Coverage">
-                                    <ChartAiCoverage data={reportsData.aiCoverage} />
-                                </Card>
-                                {reportsData.pageImprovements && (
-                                    <Card title="Top Pages by Score Improvement">
-                                        <ChartPageImprovements data={reportsData.pageImprovements} />
-                                    </Card>
-                                )}
-                            </div>
-
-                            {/* Right Column */}
-                            <div className="lg:col-span-2">
-                                {isGscConnected && reportsData.gscPerformance ? (
-                                    <Card title={`Impressions vs. Clicks (GSC)`} className="h-full">
-                                        <ChartGscPerformance data={reportsData.gscPerformance} />
-                                    </Card>
-                                ) : (
-                                    <Card title="Impressions vs. Clicks" className="h-full">
-                                        <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                                            <h4 className="mt-2 font-semibold text-slate-800">Connect Google Search Console</h4>
-                                            <p className="mt-1 text-sm text-slate-500">Link your GSC account to see impression and click data directly in your dashboard.</p>
-                                            <Button onClick={handleConnectGsc} isLoading={isConnecting} className="mt-4">Connect GSC</Button>
-                                        </div>
-                                    </Card>
-                                )}
-                            </div>
-                        </div>
-
-                        <Card title="Optimization Activity">
-                            <OptimizationActivityTable data={reportsData.optimizationActivity} />
+                        <Card title="Top Page Improvements by Score">
+                            <ChartPageImprovements data={reportData.topPageImprovements} />
                         </Card>
-
-                        <GeoInsightsPlaceholder />
                     </div>
-                )}
+                    
+                    <GeoInsightsPlaceholder />
+
+                    <Card title="Detailed Optimization Activity">
+                        <OptimizationActivityTable data={reportData.optimizationActivity} />
+                    </Card>
+                </div>
             </div>
         </div>
     );

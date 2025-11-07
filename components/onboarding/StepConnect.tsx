@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import { verifyDomain } from '../../services/api';
 import Toast from '../common/Toast';
+import PlatformInstructions from './PlatformInstructions';
 
 const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
     const [copied, setCopied] = useState(false);
@@ -35,6 +36,7 @@ const StepConnect: React.FC<StepConnectProps> = ({ onSiteConnected }) => {
     const [domain, setDomain] = useState('');
     const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verifying' | 'verified' | 'failed'>('pending');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+    const [showInstructions, setShowInstructions] = useState(false);
 
     const SCRIPT_TAG = `<script defer src="/dual.js"></script>`;
     
@@ -79,7 +81,7 @@ const StepConnect: React.FC<StepConnectProps> = ({ onSiteConnected }) => {
                   type="text"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  className="mt-1 block w-full px-4 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:ring-accent-default focus:border-accent-default sm:text-sm"
+                  className="mt-1 block w-full px-4 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900"
                   placeholder="e.g., example.com"
                   disabled={verificationStatus === 'verified' || verificationStatus === 'verifying'}
                 />
@@ -90,7 +92,21 @@ const StepConnect: React.FC<StepConnectProps> = ({ onSiteConnected }) => {
                 <div className="mt-2">
                     <CodeBlock code={SCRIPT_TAG} />
                 </div>
+                <div className="text-center mt-4">
+                    <button
+                        onClick={() => setShowInstructions(!showInstructions)}
+                        className="text-sm font-medium text-accent-default hover:underline"
+                    >
+                        {showInstructions ? 'Hide instructions' : 'Where do I paste this?'}
+                    </button>
+                </div>
             </div>
+            
+            {showInstructions && (
+                <div className="mt-4 max-w-xl mx-auto animate-fade-in-up" style={{ animationDuration: '0.3s' }}>
+                    <PlatformInstructions />
+                </div>
+            )}
 
             <div className="mt-8 text-center">
                 <Button 

@@ -1,38 +1,53 @@
 import React, { useState } from 'react';
 import Stepper from '../components/onboarding/Stepper';
+import StepConfirmProfile from '../components/onboarding/StepConfirmProfile';
 import StepPlan from '../components/onboarding/StepPlan';
+import StepGscConnect from '../components/onboarding/StepGscConnect';
 import StepConnect from '../components/onboarding/StepConnect';
 import StepScan from '../components/onboarding/StepScan';
-import Card from '../components/common/Card';
 
 const OnboardingPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
-    const steps = ['Select Plan', 'Connect Site', 'First Scan'];
+    const steps = ['Your Profile', 'Choose Plan', 'Connect GSC', 'Connect Site', 'First Scan'];
 
-    const goToNextStep = () => setCurrentStep(prev => prev + 1);
-    const goToStep = (step: number) => setCurrentStep(step);
-
-    const renderStepContent = () => {
-        switch (currentStep) {
-            case 1:
-                return <StepPlan onPlanSelected={goToNextStep} />;
-            case 2:
-                return <StepConnect onSiteConnected={goToNextStep} />;
-            case 3:
-                return <StepScan />;
-            default:
-                return <StepPlan onPlanSelected={goToNextStep} />;
+    const handleNextStep = () => {
+        if (currentStep < steps.length) {
+            setCurrentStep(currentStep + 1);
+        }
+    };
+    
+    const handleStepClick = (step: number) => {
+        // Allow going back to previous completed steps
+        if (step < currentStep) {
+            setCurrentStep(step);
         }
     }
+    
+    const renderStep = () => {
+        switch (currentStep) {
+            case 1:
+                return <StepConfirmProfile onProfileConfirmed={handleNextStep} />;
+            case 2:
+                return <StepPlan onPlanSelected={handleNextStep} />;
+            case 3:
+                return <StepGscConnect onGscConnected={handleNextStep} />;
+            case 4:
+                return <StepConnect onSiteConnected={handleNextStep} />;
+            case 5:
+                return <StepScan />;
+            default:
+                return <div>Unknown Step</div>;
+        }
+    };
 
     return (
-        <div className="bg-slate-50 min-h-[calc(100vh-8rem)] py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-                <Stepper steps={steps} currentStep={currentStep} onStepClick={goToStep} />
-                <div className="mt-8">
-                   <Card>
-                       {renderStepContent()}
-                   </Card>
+        <div className="bg-slate-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-5xl mx-auto">
+                <div className="mb-12 flex justify-center">
+                    <Stepper steps={steps} currentStep={currentStep - 1} onStepClick={handleStepClick} />
+                </div>
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                   {renderStep()}
                 </div>
             </div>
         </div>

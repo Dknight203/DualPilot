@@ -19,12 +19,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // For this demo, any successful login sets the flag.
     console.log(`User logged in: ${email}`);
     localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userEmail', email); // Store user's identity
     setIsAuthenticated(true);
   };
 
   const logout = () => {
     console.log('User logged out');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail'); // Clear user's identity
+    localStorage.removeItem('gsc_connected'); // Clear GSC connection status
     setIsAuthenticated(false);
   };
 

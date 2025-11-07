@@ -14,7 +14,9 @@
     "react-router-dom": "^7.9.5",
     "tailwindcss": "^4.1.16",
     "next": "^16.0.1",
-    "@google/genai": "^1.28.0"
+    "@google/genai": "^1.28.0",
+    "jspdf": "^2.5.1",
+    "html2canvas": "^1.4.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

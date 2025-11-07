@@ -3,9 +3,11 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import Button from '../common/Button';
 import SiteSwitcher from '../site/SiteSwitcher';
+import { useSite } from '../site/SiteContext';
 
 const NavBar: React.FC = () => {
   const { isAuthenticated, logout } = useAuth();
+  const { sites, isLoading: isSiteLoading } = useSite();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -15,6 +17,26 @@ const NavBar: React.FC = () => {
   
   const navLinkClasses = "text-sm font-medium text-gray-700 hover:text-brand-blue transition-colors";
   const activeNavLinkClasses = "text-brand-blue font-semibold";
+
+  const renderAuthenticatedNav = () => {
+    if (isSiteLoading) {
+      return <div className="w-48 h-9 bg-slate-200 rounded-md animate-pulse" />;
+    }
+    
+    if (sites.length > 0) {
+      return <SiteSwitcher />;
+    }
+
+    return (
+      <Button 
+        variant="primary" 
+        size="sm"
+        onClick={() => navigate('/onboarding')}
+      >
+        Add New Site
+      </Button>
+    );
+  };
 
   return (
     <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200">
@@ -38,7 +60,7 @@ const NavBar: React.FC = () => {
           <div className="flex items-center space-x-4">
              {isAuthenticated ? (
                 <>
-                  <SiteSwitcher />
+                  {renderAuthenticatedNav()}
                   <NavLink to="/settings" className={`${navLinkClasses} hidden sm:block`}>Settings</NavLink>
                   <Button onClick={handleLogout} variant="outline" size="sm">Log Out</Button>
                 </>

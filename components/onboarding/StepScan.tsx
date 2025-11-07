@@ -46,6 +46,12 @@ const StepScan: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
+    const handleGoToDashboard = () => {
+        // Set a flag to trigger the tour on the first visit
+        localStorage.setItem('isNewUserForTour', 'true');
+        navigate('/dashboard');
+    };
+
     return (
         <div className="flex flex-col items-center justify-center py-8">
             <h2 className="text-2xl font-bold text-center text-slate-900">Running First Scan</h2>
@@ -65,7 +71,7 @@ const StepScan: React.FC = () => {
                     <h3 className="text-xl font-bold text-center text-green-600">Your site is ready!</h3>
                     <p className="mt-1 text-center text-slate-600">Let's see your new dashboard and start optimizing.</p>
                     <div className="mt-4 text-center">
-                        <Button size="lg" onClick={() => navigate('/dashboard')}>
+                        <Button size="lg" onClick={handleGoToDashboard}>
                             Go to Dashboard
                         </Button>
                     </div>

@@ -40,11 +40,11 @@ const SettingsPage: React.FC = () => {
                     <form className="space-y-4">
                         <div>
                             <label htmlFor="siteName" className="block text-sm font-medium text-slate-700">Site Name</label>
-                            <input type="text" id="siteName" defaultValue={seedSite.siteName} className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md" />
+                            <input type="text" id="siteName" defaultValue={seedSite.siteName} className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900" />
                         </div>
                         <div>
                             <label htmlFor="domain" className="block text-sm font-medium text-slate-700">Primary Domain</label>
-                            <input type="text" id="domain" defaultValue={seedSite.domain} className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md" />
+                            <input type="text" id="domain" defaultValue={seedSite.domain} className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900" />
                         </div>
                          <div className="text-right">
                              <Button>Save Changes</Button>
