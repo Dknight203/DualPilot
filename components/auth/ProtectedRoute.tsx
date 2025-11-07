@@ -1,15 +1,29 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
+const restrictedPathsForMembers = ['/settings', '/admin'];
+
 const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) {
-    // Redirect them to the /login page, but save the current location they were
-    // trying to go to. This allows us to send them along to that page after they login,
-    // which is a nicer user experience than dropping them off on the home page.
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // Role-based access control
+  if (user?.role === 'Member' && restrictedPathsForMembers.includes(location.pathname)) {
+     return <Navigate 
+                to="/dashboard" 
+                replace 
+                state={{ 
+                    toast: { 
+                        message: 'You do not have permission to access that page.', 
+                        type: 'error' 
+                    } 
+                }} 
+            />;
   }
 
   return <Outlet />;

@@ -118,6 +118,8 @@ export interface TeamMember {
     name: string;
     email: string;
     role: 'Admin' | 'Member';
+    status: 'Active' | 'Pending Invitation';
+    isOwner?: boolean;
 }
 
 export interface ApiKey {

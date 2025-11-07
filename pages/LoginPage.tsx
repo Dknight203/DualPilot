@@ -17,37 +17,41 @@ const LoginPage: React.FC = () => {
         setIsLoading(true);
         setError('');
 
-        // Placeholder logic
-        setTimeout(() => {
-            if (email === 'test@example.com' && password === 'password') {
-                console.log('Logged in successfully');
-                login(email);
-                localStorage.setItem('gsc_connected', 'true'); // Simulate GSC connection
-                navigate('/dashboard');
-            } else if (email === 'empty@example.com' && password === 'password') {
-                console.log('Logged in successfully');
-                login(email);
-                localStorage.removeItem('gsc_connected'); // Ensure no GSC connection
-                navigate('/dashboard');
-            } else if (email === 'agency@example.com' && password === 'password') {
-                console.log('Logged in as Agency user');
-                login(email);
-                localStorage.setItem('gsc_connected', 'true'); // Simulate GSC connection
+        try {
+             // Placeholder password check
+            const validPasswords = ['password'];
+            const validEmails = ['test@example.com', 'empty@example.com', 'agency@example.com', 'jane@example.com'];
+
+            if (validEmails.includes(email) && validPasswords.includes(password)) {
+                await login(email);
+                if (email !== 'empty@example.com') {
+                    localStorage.setItem('gsc_connected', 'true');
+                } else {
+                    localStorage.removeItem('gsc_connected');
+                }
                 navigate('/dashboard');
             } else {
-                setError('Invalid credentials. Use test@example.com, empty@example.com, or agency@example.com with password.');
+                throw new Error('Invalid credentials');
             }
+        } catch (err) {
+            setError('Invalid credentials. Use a valid test email with password "password".');
+        } finally {
             setIsLoading(false);
-        }, 1000);
+        }
     };
 
-    const handleOAuthLogin = (provider: string) => {
-        console.log(`Attempting to log in with ${provider}`);
-        // Placeholder: In a real app, this would trigger the OAuth flow.
-        // For the demo, we'll just log in the user to proceed.
-        login(`${provider}@example.com`);
-        localStorage.setItem('gsc_connected', 'true'); // Simulate GSC for OAuth demo
-        navigate('/dashboard');
+    const handleOAuthLogin = async (provider: string) => {
+        setIsLoading(true);
+        try {
+            const email = `${provider}@example.com`;
+            await login(email);
+            localStorage.setItem('gsc_connected', 'true');
+            navigate('/dashboard');
+        } catch (err) {
+             setError('Failed to log in with OAuth provider.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

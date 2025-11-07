@@ -8,10 +8,17 @@ import {
 import { GoogleGenAI } from '@google/genai';
 
 // --- MOCK DATA ---
-const mockSites: Site[] = [
-    { id: 'site_123', siteName: 'DualPilot Demo', domain: 'dualpilot.ai', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' },
-    { id: 'site_456', siteName: 'Client B Corp', domain: 'client-b.com', plan: PlanId.Agency, optimizedPages: 45, totalPages: 50, visibilityScore: 88, refreshPolicy: 'Daily refresh' },
-];
+const userSites: { [key: string]: Site[] } = {
+    'test@example.com': [
+        { id: 'site_123', siteName: 'DualPilot Demo', domain: 'dualpilot.ai', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' },
+    ],
+    'agency@example.com': [
+        { id: 'site_456', siteName: 'Agency Client Site', domain: 'agency-client.com', plan: PlanId.Agency, optimizedPages: 450, totalPages: 1000, visibilityScore: 88, refreshPolicy: 'Daily refresh' },
+        { id: 'site_789', siteName: 'Another Client Corp', domain: 'another-client.com', plan: PlanId.Agency, optimizedPages: 120, totalPages: 250, visibilityScore: 94, refreshPolicy: 'Daily refresh' },
+    ],
+    'empty@example.com': [],
+};
+
 
 const mockPages: Page[] = [
     { id: 'page_01', url: '/blog/ai-seo-strategies', lastOptimized: '2023-10-26', score: 95, status: PageStatus.Optimized },
@@ -32,6 +39,13 @@ const mockImprovedPages: ImprovedPage[] = [
 const mockApiKeys: ApiKey[] = [
     { id: 'key_1', name: 'CMS Integration', lastFour: 'a1b2', createdAt: '2023-10-15T10:00:00Z', status: 'active' },
     { id: 'key_2', name: 'Reporting Script', lastFour: 'c3d4', createdAt: '2023-09-01T14:30:00Z', status: 'active' },
+];
+
+const mockTeamMembers: TeamMember[] = [
+    { id: 'user_1', name: 'Alex Smith (You)', email: 'test@example.com', role: 'Admin', status: 'Active', isOwner: true },
+    { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member', status: 'Active' },
+    { id: 'user_3', name: 'Mike Johnson', email: 'mike@example.com', role: 'Admin', status: 'Active' },
+    { id: 'user_4', name: 'Sarah Lee', email: 'agency@example.com', role: 'Admin', status: 'Active', isOwner: true },
 ];
 
 // --- API SIMULATION ---
@@ -70,10 +84,15 @@ export const verifyDomain = (domain: string): Promise<{ verified: boolean; heart
 };
 
 export const getSites = (): Promise<Site[]> => {
-    return simulateApiCall(mockSites);
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const sitesForUser = userSites[userEmail] || [];
+    return simulateApiCall(sitesForUser);
 };
 
 export const getDashboardData = (siteId: string) => {
+    const allSites = Object.values(userSites).flat();
+    const site = allSites.find(s => s.id === siteId);
+
     // Generate some mock chart data
     const visibilityTrend: LineChartData[] = Array.from({ length: 30 }, (_, i) => {
         const date = new Date();
@@ -111,7 +130,7 @@ export const getDashboardData = (siteId: string) => {
     ];
 
     const data = {
-        site: mockSites.find(s => s.id === siteId) || mockSites[0],
+        site,
         charts: { visibilityTrend, issuesFixed, pageStatus },
         events,
         topImprovedPages: mockImprovedPages,
@@ -170,13 +189,42 @@ export const getBillingInfo = (): Promise<{ invoices: Invoice[] }> => {
     return simulateApiCall({ invoices });
 };
 
-export const getTeamMembers = (): Promise<TeamMember[]> => {
-    const members: TeamMember[] = [
-        { id: 'user_1', name: 'Alex Smith', email: 'alex@example.com', role: 'Admin' },
-        { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member' },
-    ];
-    return simulateApiCall(members);
+export const getCurrentUser = (email: string): Promise<TeamMember | undefined> => {
+    const user = mockTeamMembers.find(member => member.email === email);
+    // If not found, create a placeholder Admin user for demo purposes
+    if (!user && email) {
+        return simulateApiCall({ id: 'user_new', name: 'New User', email, role: 'Admin', status: 'Active' });
+    }
+    return simulateApiCall(user);
 };
+
+export const getTeamMembers = (): Promise<TeamMember[]> => {
+    const currentUserEmail = localStorage.getItem('userEmail');
+    // Filter out the current user for the list view
+    return simulateApiCall(mockTeamMembers.filter(m => m.email !== currentUserEmail));
+};
+
+export const inviteTeamMember = (email: string, role: 'Admin' | 'Member'): Promise<TeamMember> => {
+    const newMember: TeamMember = {
+        id: `user_${Math.random()}`,
+        name: '(Pending)',
+        email,
+        role,
+        status: 'Pending Invitation',
+    };
+    mockTeamMembers.unshift(newMember);
+    return simulateApiCall(newMember);
+};
+
+export const updateTeamMemberRole = (memberId: string, role: 'Admin' | 'Member'): Promise<TeamMember> => {
+    const member = mockTeamMembers.find(m => m.id === memberId);
+    if (member) {
+        member.role = role;
+        return simulateApiCall(member, 300);
+    }
+    return Promise.reject('Member not found');
+};
+
 
 export const getApiKeys = (): Promise<ApiKey[]> => {
     return simulateApiCall(mockApiKeys);

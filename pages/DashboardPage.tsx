@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Site, LineChartData, StackedBarChartData, PieChartData, Page, Event as AppEvent, ImprovedPage } from '../types';
 import { getDashboardData, getPages, forceRecrawl, pingForIndex } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
@@ -22,6 +22,7 @@ import { dashboardTourSteps } from '../data/tourSteps';
 const DashboardPage: React.FC = () => {
     const { activeSite, sites } = useSite();
     const navigate = useNavigate();
+    const location = useLocation();
     const [dashboardData, setDashboardData] = useState<{
         site: Site;
         charts: {
@@ -39,6 +40,15 @@ const DashboardPage: React.FC = () => {
     // Tour State
     const [showTourModal, setShowTourModal] = useState(false);
     const [isTourActive, setIsTourActive] = useState(false);
+
+    // Handle toast messages passed from redirects (e.g., from ProtectedRoute)
+    useEffect(() => {
+        if (location.state?.toast) {
+            setToast(location.state.toast);
+            // Clear the state so the toast doesn't re-appear on refresh
+            navigate(location.pathname, { replace: true });
+        }
+    }, [location, navigate]);
 
     const fetchDataForSite = useCallback(async (siteId: string) => {
         setIsLoading(true);
