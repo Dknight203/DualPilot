@@ -2,36 +2,34 @@ import React from 'react';
 import { GscDataPoint } from '../../../types';
 
 interface GscPerformanceTableProps {
-    currentData: GscDataPoint[];
-    previousData?: GscDataPoint[];
+    data: {
+        current: GscDataPoint[];
+        previous?: GscDataPoint[];
+    }
 }
 
 const ChangeIndicator: React.FC<{ change: number | null }> = ({ change }) => {
-    if (change === null) return <span className="text-slate-500">-</span>;
+    if (change === null) return null;
     const isPositive = change > 0;
     const color = isPositive ? 'text-green-600' : 'text-red-600';
     return (
-        <span className={`text-xs font-semibold ${color}`}>
+        <span className={`text-xs font-semibold ${color} ml-2`}>
             {isPositive ? '↑' : '↓'} {Math.abs(change).toFixed(1)}%
         </span>
     );
 }
 
-const GscPerformanceTable: React.FC<GscPerformanceTableProps> = ({ currentData, previousData }) => {
+const GscPerformanceTable: React.FC<GscPerformanceTableProps> = ({ data }) => {
+    const { current: currentData, previous: previousData } = data;
+    
     return (
-        <div className="overflow-x-auto max-h-96">
+        <div className="overflow-auto max-h-[32rem]">
             <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50 sticky top-0">
                     <tr>
                         <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                         <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Clicks</th>
                         <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Impressions</th>
-                        {previousData && (
-                            <>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Prev. Clicks</th>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Prev. Impressions</th>
-                            </>
-                        )}
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
@@ -51,12 +49,6 @@ const GscPerformanceTable: React.FC<GscPerformanceTableProps> = ({ currentData, 
                                     {Math.round(row.impressions).toLocaleString()}
                                     {prevRow && <ChangeIndicator change={impressionsChange} />}
                                 </td>
-                                {prevRow && (
-                                    <>
-                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-500 text-right">{Math.round(prevRow.clicks).toLocaleString()}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-500 text-right">{Math.round(prevRow.impressions).toLocaleString()}</td>
-                                    </>
-                                )}
                             </tr>
                         );
                     })}

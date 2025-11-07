@@ -1,6 +1,5 @@
 import React from 'react';
 import { ImpactAnalysisItem } from '../../../types';
-import Card from '../../common/Card';
 
 interface ImpactAnalysisProps {
     data: ImpactAnalysisItem[];
@@ -21,7 +20,7 @@ const ImpactBadge: React.FC<{ impact: 'High' | 'Medium' | 'Low' }> = ({ impact }
 
 const ImpactAnalysis: React.FC<ImpactAnalysisProps> = ({ data }) => {
     return (
-        <Card title="What's Working: An Analysis of Your Actions">
+        <div>
             {(!data || data.length === 0) ? (
                  <p className="text-center text-slate-500 py-8">Not enough data to analyze impact yet. Keep optimizing!</p>
             ) : (
@@ -37,7 +36,7 @@ const ImpactAnalysis: React.FC<ImpactAnalysisProps> = ({ data }) => {
                     ))}
                 </ul>
             )}
-        </Card>
+        </div>
     );
 };
 

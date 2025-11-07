@@ -1,46 +1,59 @@
-import React, { useRef } from 'react';
+import React from 'react';
+import { ReportWidgetConfig } from '../../../pages/ReportsPage';
+import ReportWidgetHeader from './ReportWidgetHeader';
 
 interface DraggableReportWidgetProps {
-    id: any;
-    index: number;
-    moveWidget: (dragIndex: number, hoverIndex: number) => void;
-    children: React.ReactNode;
+  widget: ReportWidgetConfig;
+  moveWidget: (dragId: string, dropId: string) => void;
+  children: React.ReactNode;
+  onExport: () => void;
+  setChartType: (type: 'line' | 'bar') => void;
+  className?: string;
 }
 
-const DraggableReportWidget: React.FC<DraggableReportWidgetProps> = ({ id, index, moveWidget, children }) => {
-    const ref = useRef<HTMLDivElement>(null);
+const DraggableReportWidget: React.FC<DraggableReportWidgetProps> = ({ widget, moveWidget, children, onExport, setChartType, className = 'col-span-1 md:col-span-2 lg:col-span-2' }) => {
 
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', JSON.stringify({ id, index }));
-    };
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData('text/plain', widget.id);
+    if(e.currentTarget.parentElement) {
+        e.currentTarget.parentElement.style.opacity = '0.4';
+    }
+  };
 
-    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    };
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+     if(e.currentTarget.parentElement) {
+        e.currentTarget.parentElement.style.opacity = '1';
+    }
+  };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        const droppedItem = JSON.parse(e.dataTransfer.getData('text/plain'));
-        if (droppedItem.id !== id) {
-            moveWidget(droppedItem.index, index);
-        }
-    };
-    
-    return (
-        <div
-            ref={ref}
-            draggable
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            style={{ cursor: 'move' }}
-            className="h-full"
-        >
-            {children}
-        </div>
-    );
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Necessary to allow dropping
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const dragId = e.dataTransfer.getData('text/plain');
+    moveWidget(dragId, widget.id);
+  };
+
+  return (
+    <div
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      className={`bg-white shadow-sm rounded-xl border border-slate-200 flex flex-col ${className}`}
+    >
+      <ReportWidgetHeader
+        title={widget.title}
+        onExport={onExport}
+        chartType={widget.chartType}
+        setChartType={setChartType}
+        hasChartControls={!!widget.chartType}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      />
+      {children}
+    </div>
+  );
 };
 
 export default DraggableReportWidget;

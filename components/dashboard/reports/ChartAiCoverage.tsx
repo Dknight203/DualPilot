@@ -10,21 +10,15 @@ const ChartAiCoverage: React.FC<ChartAiCoverageProps> = ({ data }) => {
         return <p>No data available.</p>;
     }
 
-    const colors = {
-        'Covered': '#0A66C2', // Brand Blue
-        'Not Covered': '#E5E7EB', // Slate 200
-    };
-
     const coveredItem = data.find(d => d.name === 'Covered');
     const coveredPercent = coveredItem ? coveredItem.value : 0;
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    const strokeDashoffset = 251.2 - (251.2 * (coveredPercent / total)); // Circumference of circle with r=40 is 2*PI*40 ~= 251.2
+    const strokeDashoffset = 251.2 - (251.2 * (coveredPercent / total)); 
 
     return (
         <div className="flex flex-col items-center justify-center">
             <div className="relative w-40 h-40">
                 <svg className="w-full h-full" viewBox="0 0 100 100">
-                    {/* Background circle */}
                     <circle
                         className="text-slate-200"
                         stroke="currentColor"
@@ -34,7 +28,6 @@ const ChartAiCoverage: React.FC<ChartAiCoverageProps> = ({ data }) => {
                         cx="50"
                         cy="50"
                     />
-                    {/* Foreground circle */}
                     <circle
                         className="text-brand-blue"
                         stroke="currentColor"

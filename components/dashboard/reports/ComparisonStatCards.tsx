@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { GscDataPoint, AiCoverageData } from '../../../types';
-import Card from '../../common/Card';
 
 interface ComparisonStatCardsProps {
     gscData: {
@@ -19,7 +18,7 @@ const Stat: React.FC<{ label: string; value: string; change: number | null; posi
     const changeSymbol = change === null ? '' : change > 0 ? '↑' : '↓';
 
     return (
-        <Card>
+        <div className="bg-slate-50 p-4 rounded-lg">
             <h4 className="text-sm font-medium text-slate-500">{label}</h4>
             <div className="mt-1 flex items-baseline justify-between">
                 <p className="text-2xl font-semibold text-slate-900">{value}</p>
@@ -30,13 +29,15 @@ const Stat: React.FC<{ label: string; value: string; change: number | null; posi
                     </p>
                 )}
             </div>
-        </Card>
+        </div>
     );
 };
 
 
 const ComparisonStatCards: React.FC<ComparisonStatCardsProps> = ({ gscData, aiCoverageData }) => {
     
+    if (!gscData || !aiCoverageData) return null;
+
     const calculateTotal = (data: GscDataPoint[], key: 'clicks' | 'impressions') => data.reduce((sum, item) => sum + item[key], 0);
 
     const currentClicks = calculateTotal(gscData.current, 'clicks');
@@ -57,14 +58,11 @@ const ComparisonStatCards: React.FC<ComparisonStatCardsProps> = ({ gscData, aiCo
     
 
     return (
-        <div>
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Comparison vs. Previous Period</h2>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                <Stat label="Total Clicks" value={currentClicks.toLocaleString()} change={clicksChange} positiveIsGood={true} />
-                <Stat label="Total Impressions" value={currentImpressions.toLocaleString()} change={impressionsChange} positiveIsGood={true} />
-                <Stat label="Average CTR" value={`${currentCtr.toFixed(2)}%`} change={ctrChange} positiveIsGood={true} />
-                <Stat label="AI Coverage" value={`${currentAiCoverage}%`} change={aiCoverageChange} positiveIsGood={true} />
-            </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Stat label="Total Clicks" value={currentClicks.toLocaleString()} change={clicksChange} positiveIsGood={true} />
+            <Stat label="Total Impressions" value={currentImpressions.toLocaleString()} change={impressionsChange} positiveIsGood={true} />
+            <Stat label="Average CTR" value={`${currentCtr.toFixed(2)}%`} change={ctrChange} positiveIsGood={true} />
+            <Stat label="AI Coverage" value={`${currentAiCoverage}%`} change={aiCoverageChange} positiveIsGood={true} />
         </div>
     );
 };
