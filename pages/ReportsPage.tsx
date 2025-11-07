@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { getReportData } from '../services/api';
-import { ReportData } from '../types';
+import { getReportData, getBrandingSettings } from '../services/api';
+import { ReportData, BrandingSettings } from '../types';
 import { useSite } from '../components/site/SiteContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import ReportsControls from '../components/dashboard/reports/ReportsControls';
@@ -43,6 +43,7 @@ const ReportsPage: React.FC = () => {
         return { start, end };
     });
     const [compare, setCompare] = useState(true);
+    const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
 
     const initialWidgets: ReportWidgetConfig[] = [
         { id: 'summary', title: 'AI-Generated Summary', component: AiSummary, props: {}, className: 'col-span-1 md:col-span-2 lg:col-span-2' },
@@ -81,6 +82,16 @@ const ReportsPage: React.FC = () => {
             setIsLoading(false);
         }
     }, [fetchData]);
+
+    useEffect(() => {
+        const fetchBranding = async () => {
+            if (activeSite?.plan === 'agency') {
+                const settings = await getBrandingSettings();
+                setBrandingSettings(settings);
+            }
+        };
+        fetchBranding();
+    }, [activeSite]);
     
     const handleExportWidget = async (widgetId: string) => {
         const widgetEl = widgetRefs.current[widgetId];
@@ -89,7 +100,7 @@ const ReportsPage: React.FC = () => {
             return;
         }
         setToast({ message: `Exporting ${widgetId}...`, type: 'info' });
-        await generatePdfReport(widgetEl, `${activeSite.siteName} - ${widgetId}`, activeSite.plan);
+        await generatePdfReport(widgetEl, `${activeSite.siteName} - ${widgetId}`, activeSite.plan, brandingSettings);
     };
 
     const handleGscConnectSuccess = () => {

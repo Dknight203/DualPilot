@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getBillingInfo, getTeamMembers, getApiKeys, generateApiKey, revokeApiKey, inviteTeamMember, updateTeamMemberRole, getCmsConnection, connectCms, disconnectCms } from '../services/api';
-import { Invoice, TeamMember, ApiKey, CmsConnection } from '../types';
+import { getBillingInfo, getTeamMembers, getApiKeys, generateApiKey, revokeApiKey, inviteTeamMember, updateTeamMemberRole, getCmsConnection, connectCms, disconnectCms, getBrandingSettings, updateBrandingLogo, removeBrandingLogo } from '../services/api';
+import { Invoice, TeamMember, ApiKey, CmsConnection, BrandingSettings } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -41,6 +41,11 @@ const SettingsPage: React.FC = () => {
     const [wpUsername, setWpUsername] = useState('');
     const [wpPassword, setWpPassword] = useState('');
 
+    // State for Branding
+    const [brandingSettings, setBrandingSettings] = useState<BrandingSettings | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -56,16 +61,18 @@ const SettingsPage: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [billingData, teamData, keysData, cmsData] = await Promise.all([
+                const [billingData, teamData, keysData, cmsData, brandingData] = await Promise.all([
                     getBillingInfo(), 
                     getTeamMembers(),
                     getApiKeys(),
-                    getCmsConnection()
+                    getCmsConnection(),
+                    getBrandingSettings()
                 ]);
                 setInvoices(billingData.invoices);
                 setTeamMembers(teamData);
                 setApiKeys(keysData);
                 setCmsConnection(cmsData);
+                setBrandingSettings(brandingData);
             } catch (error) {
                 console.error("Failed to load settings data", error);
                 setToast({ message: 'Failed to load settings data.', type: 'error' });
@@ -161,6 +168,52 @@ const SettingsPage: React.FC = () => {
         }
     };
 
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+            setToast({ message: 'File is too large. Please use an image under 2MB.', type: 'error' });
+            return;
+        }
+        if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif'].includes(file.type)) {
+            setToast({ message: 'Invalid file type. Please use PNG, JPG, GIF or SVG.', type: 'error' });
+            return;
+        }
+
+        setIsUploading(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            try {
+                const base64Url = reader.result as string;
+                const updatedSettings = await updateBrandingLogo(base64Url);
+                setBrandingSettings(updatedSettings);
+                setToast({ message: 'Logo uploaded successfully!', type: 'success' });
+            } catch (error) {
+                setToast({ message: 'Failed to upload logo.', type: 'error' });
+            } finally {
+                setIsUploading(false);
+            }
+        };
+        reader.onerror = () => {
+            setToast({ message: 'Failed to read file.', type: 'error' });
+            setIsUploading(false);
+        };
+    };
+
+    const handleRemoveLogo = async () => {
+        if (window.confirm('Are you sure you want to remove your custom logo?')) {
+            try {
+                await removeBrandingLogo();
+                setBrandingSettings(null);
+                setToast({ message: 'Logo removed.', type: 'success' });
+            } catch (error) {
+                setToast({ message: 'Failed to remove logo.', type: 'error' });
+            }
+        }
+    };
+
+
     if (isLoading || !activeSite || !currentUser) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner text="Loading Settings..." /></div>;
     }
@@ -220,6 +273,54 @@ const SettingsPage: React.FC = () => {
                          <div className="mt-4 text-right">
                              <Button variant="outline">Manage Billing</Button>
                          </div>
+                    </Card>
+
+                    <Card title="Branding">
+                        {activeSite.plan === 'agency' ? (
+                            <>
+                                {isAdmin ? (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-slate-600">Upload your logo to automatically brand all exported reports. This is a universal setting for your agency.</p>
+                                        <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg">
+                                            <div className="w-24 h-12 flex items-center justify-center bg-slate-200 rounded">
+                                                {brandingSettings?.logoUrl ? (
+                                                    <img src={brandingSettings.logoUrl} alt="Your Logo" className="max-h-full max-w-full object-contain" />
+                                                ) : (
+                                                    <span className="text-xs text-slate-500">No Logo</span>
+                                                )}
+                                            </div>
+                                            <div className="flex-grow">
+                                                <input type="file" ref={fileInputRef} onChange={handleLogoUpload} accept="image/png, image/jpeg, image/svg+xml, image/gif" className="hidden" />
+                                                <Button onClick={() => fileInputRef.current?.click()} isLoading={isUploading} variant="outline" size="sm">
+                                                    {brandingSettings?.logoUrl ? 'Change Logo' : 'Upload Logo'}
+                                                </Button>
+                                                {brandingSettings?.logoUrl && (
+                                                    <Button onClick={handleRemoveLogo} variant="outline" size="sm" className="ml-2 !border-red-300 !text-red-600 hover:!bg-red-50">
+                                                        Remove
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-slate-500 p-4 bg-slate-50 rounded-lg">Branding settings are managed by your account administrators.</p>
+                                )}
+                            </>
+                        ) : (
+                            <div className="text-center p-6">
+                                <h4 className="text-lg font-semibold text-slate-800">White-Label Your Reports</h4>
+                                <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto">
+                                    Add your own logo to all report exports by upgrading to our Agency plan.
+                                </p>
+                                <div className="mt-6">
+                                    <Link to="/pricing">
+                                        <Button variant="primary">
+                                            Upgrade to Agency Plan
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
                     </Card>
 
                     <Card title="CMS Connections">
@@ -332,7 +433,7 @@ const SettingsPage: React.FC = () => {
                             API Access
                             {activeSite.plan !== 'agency' && (
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                                    <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002 2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
                                 </svg>
                             )}
                         </div>

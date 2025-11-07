@@ -2,7 +2,7 @@ import {
     ScanResult, Site, PlanId, Page, PageStatus, LineChartData, StackedBarChartData,
     PieChartData, Event, ImprovedPage, PageDetails, PageOutput, Invoice, TeamMember,
     ApiKey, ReportData, GscDataPoint, AiCoverageData, ActionAnnotation, ImpactAnalysisItem, CmsConnection,
-    InitialOptimizations
+    InitialOptimizations, BrandingSettings
 } from '../types';
 import { GoogleGenAI } from '@google/genai';
 
@@ -349,6 +349,25 @@ export const getInitialOptimizations = (): Promise<InitialOptimizations> => {
 
 export const bulkApproveOptimizations = (): Promise<{ success: boolean }> => {
     return simulateApiCall({ success: true }, 1500);
+};
+
+
+// --- BRANDING API ---
+export const getBrandingSettings = (): Promise<BrandingSettings | null> => {
+    const settingsStr = localStorage.getItem('brandingSettings');
+    const settings = settingsStr ? JSON.parse(settingsStr) : null;
+    return simulateApiCall(settings);
+};
+
+export const updateBrandingLogo = (logoUrl: string): Promise<BrandingSettings> => {
+    const settings = { logoUrl };
+    localStorage.setItem('brandingSettings', JSON.stringify(settings));
+    return simulateApiCall(settings);
+};
+
+export const removeBrandingLogo = (): Promise<{ success: boolean }> => {
+    localStorage.removeItem('brandingSettings');
+    return simulateApiCall({ success: true });
 };
 
 

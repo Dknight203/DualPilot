@@ -199,3 +199,7 @@ export interface InitialOptimizations {
     optimizablePages: number;
     examples: OptimizationExample[];
 }
+
+export interface BrandingSettings {
+    logoUrl: string | null;
+}
