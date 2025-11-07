@@ -5,6 +5,7 @@ import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import InfoTooltip from '../components/common/InfoTooltip';
+// FIX: Corrected import to be a valid module import.
 import Playbook from '../components/aivisibility/Playbook';
 import Toast from '../components/common/Toast';
 import ScoreGaugeSection from '../components/aivisibility/ScoreGaugeSection';

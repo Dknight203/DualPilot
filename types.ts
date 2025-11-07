@@ -144,6 +144,19 @@ export interface OptimizationActivity {
     keywords: string[];
 }
 
+export interface ActionAnnotation {
+    date: string;
+    type: 'Optimization' | 'Schema';
+    description: string;
+}
+
+export interface ImpactAnalysisItem {
+    type: string;
+    impact: 'High' | 'Medium' | 'Low';
+    description: string;
+}
+
+
 export interface ReportData {
     summary: string;
     gscPerformance: {
@@ -156,4 +169,6 @@ export interface ReportData {
     };
     topPageImprovements: PageImprovementData[];
     optimizationActivity: OptimizationActivity[];
+    annotations: ActionAnnotation[];
+    impactAnalysis: ImpactAnalysisItem[];
 }

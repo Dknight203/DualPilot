@@ -1,113 +1,75 @@
-import {
-    ScanResult,
-    Site,
-    PlanId,
-    Page,
-    PageStatus,
-    PageDetails,
-    PageOutput,
-    Invoice,
-    TeamMember,
-    LineChartData,
-    StackedBarChartData,
-    PieChartData,
-    Event,
-    ImprovedPage,
-    ReportData,
-    GscDataPoint,
-    AiCoverageData,
-    PageImprovementData,
-    OptimizationActivity
-} from '../types';
-import { seedSite } from '../data/seeds';
+// FIX: Populated this file with a mock API implementation to resolve module not found errors.
 
-// Mock delay to simulate network latency
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+import {
+    ScanResult, Site, PlanId, Page, PageStatus, LineChartData, StackedBarChartData,
+    PieChartData, Event, ImprovedPage, PageDetails, PageOutput, Invoice, TeamMember,
+    ReportData, GscDataPoint, AiCoverageData, ActionAnnotation, ImpactAnalysisItem
+} from '../types';
+import { GoogleGenAI } from '@google/genai';
 
 // --- MOCK DATA ---
-
-const mockPages: Page[] = [
-    { id: 'page_1', url: '/blog/ai-in-seo', lastOptimized: '2023-10-26', score: 95, status: PageStatus.Optimized },
-    { id: 'page_2', url: '/features/automation', lastOptimized: '2023-10-25', score: 92, status: PageStatus.Optimized },
-    { id: 'page_3', url: '/pricing', lastOptimized: '2023-10-20', score: 88, status: PageStatus.Optimized },
-    { id: 'page_4', url: '/about-us', lastOptimized: null, score: 65, status: PageStatus.NeedsReview },
-    { id: 'page_5', url: '/contact', lastOptimized: '2023-09-01', score: 78, status: PageStatus.Optimized },
-    { id: 'page_6', url: '/blog/new-feature', lastOptimized: '2023-10-28', score: 0, status: PageStatus.Pending },
+const mockSites: Site[] = [
+    { id: 'site_123', siteName: 'DualPilot Demo', domain: 'dualpilot.ai', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' },
+    { id: 'site_456', siteName: 'Client B Corp', domain: 'client-b.com', plan: PlanId.Agency, optimizedPages: 45, totalPages: 50, visibilityScore: 88, refreshPolicy: 'Daily refresh' },
 ];
 
-const mockPageDetails: PageDetails = {
-    ...mockPages[0],
-    metaTitle: 'The Role of AI in Modern SEO | DualPilot',
-    metaDescription: 'Discover how artificial intelligence is reshaping search engine optimization, from content generation to technical analysis. Stay ahead of the curve.',
-    jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", "headline": "The Role of AI in Modern SEO" },
-    userKeywords: ['AI SEO', 'machine learning search'],
-    aiKeywords: ['artificial intelligence', 'search engine optimization', 'content strategy', 'technical SEO'],
-    history: [
-        { id: 'out_1', metaTitle: 'AI in SEO', metaDescription: 'How AI is changing SEO.', jsonLd: {}, modelVersion: 'gemini-1.0', createdAt: '2023-10-20T10:00:00Z' },
-        { id: 'out_2', metaTitle: 'The Role of AI in Modern SEO | DualPilot', metaDescription: 'Discover how artificial intelligence is reshaping search engine optimization, from content generation to technical analysis. Stay ahead of the curve.', jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", "headline": "The Role of AI in Modern SEO" }, modelVersion: 'gemini-1.5', createdAt: '2023-10-26T14:30:00Z' },
-    ]
+const mockPages: Page[] = [
+    { id: 'page_01', url: '/blog/ai-seo-strategies', lastOptimized: '2023-10-26', score: 95, status: PageStatus.Optimized },
+    { id: 'page_02', url: '/features/visibility-score', lastOptimized: '2023-10-25', score: 92, status: PageStatus.Optimized },
+    { id: 'page_03', url: '/pricing', lastOptimized: '2023-10-20', score: 88, status: PageStatus.Optimized },
+    { id: 'page_04', url: '/about-us', lastOptimized: null, score: 65, status: PageStatus.NeedsReview },
+    { id: 'page_05', url: '/blog/new-feature-launch', lastOptimized: '2023-10-15', score: 78, status: PageStatus.Optimized },
+    { id: 'page_06', url: '/docs/getting-started', lastOptimized: null, score: 0, status: PageStatus.Pending },
+    { id: 'page_07', url: '/contact', lastOptimized: '2023-09-01', score: 90, status: PageStatus.Optimized },
+];
+
+const mockImprovedPages: ImprovedPage[] = [
+    { pageId: 'page_01', url: '/blog/ai-seo-strategies', oldTitle: 'AI SEO Tips', newTitle: '7 Advanced AI SEO Strategies to Dominate in 2024', oldDescription: 'Some tips for AI SEO.', newDescription: 'Unlock the future of search with these 7 advanced AI SEO strategies. Learn how to leverage machine learning for top rankings.' },
+    { pageId: 'page_02', url: '/features/visibility-score', oldTitle: 'Visibility Score', newTitle: 'What is a Visibility Score? | DualPilot Feature', oldDescription: 'Our visibility score.', newDescription: 'Discover how DualPilot\'s proprietary Visibility Score measures your site\'s health for both classic search engines and modern AI assistants.' },
+    { pageId: 'page_03', url: '/pricing', oldTitle: 'Pricing', newTitle: 'Simple, Transparent Pricing | DualPilot', oldDescription: 'See our prices.', newDescription: 'Choose the plan that fits your needs. No hidden fees, ever. Start with our Essentials plan or scale with Pro and Agency.' },
+];
+
+// --- API SIMULATION ---
+const simulateApiCall = <T>(data: T, delay = 500): Promise<T> => {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(JSON.parse(JSON.stringify(data))); // Deep copy to prevent mutation
+        }, delay);
+    });
 };
 
 // --- API FUNCTIONS ---
 
-export const scanDomain = async (domain: string): Promise<ScanResult> => {
-    console.log(`Scanning domain: ${domain}`);
-    await delay(2000);
-    return {
-        score: 78,
-        classicReadiness: true,
-        aiReadiness: false,
+export const scanDomain = (domain: string): Promise<ScanResult> => {
+    const score = Math.floor(Math.random() * (95 - 60 + 1) + 60);
+    const result: ScanResult = {
+        score,
+        classicReadiness: score > 70,
+        aiReadiness: score > 80,
         issues: [
-            'Missing structured data (JSON-LD) for key pages.',
-            'Meta descriptions are too short on 3 pages.',
-            'No clear AI summaries found for conversational search.',
+            '3 pages have no meta description',
+            'Missing Product schema on /shop/item-1',
+            'Improve internal linking to /features',
         ],
-        suggestedNextStep: 'Unlock your full potential with automated optimization.',
+        suggestedNextStep: 'Automate fixes and boost your score!',
     };
+    return simulateApiCall(result, 1500);
 };
 
-export const createCheckoutSession = async (planId: string): Promise<{ checkoutUrl: string }> => {
-    console.log(`Creating checkout session for plan: ${planId}`);
-    await delay(1500);
-    return { checkoutUrl: `https://stripe.com/mock_checkout/${planId}` };
+export const createCheckoutSession = (planId: string): Promise<{ checkoutUrl: string }> => {
+    return simulateApiCall({ checkoutUrl: `https://stripe.com/checkout/mock_session_for_${planId}` });
 };
 
-export const verifyDomain = async (domain: string): Promise<{ verified: boolean; heartbeat: string | null }> => {
-    console.log(`Verifying domain: ${domain}`);
-    await delay(1000);
-    // Simulate a 50/50 chance of being verified for demo purposes
-    if (Math.random() > 0.5) {
-        return { verified: true, heartbeat: new Date().toISOString() };
-    }
-    return { verified: false, heartbeat: null };
+export const verifyDomain = (domain: string): Promise<{ verified: boolean; heartbeat: string }> => {
+    return simulateApiCall({ verified: true, heartbeat: new Date().toISOString() });
 };
 
-export const getSites = async (): Promise<Site[]> => {
-    await delay(500);
-    const userEmail = localStorage.getItem('userEmail');
-    if (userEmail === 'empty@example.com') {
-        return [];
-    }
-    // Simulate user having multiple sites
-    return [
-        seedSite,
-        {
-            id: 'site_456',
-            siteName: 'My Super Blog',
-            domain: 'my-super-blog.com',
-            plan: PlanId.Essentials,
-            optimizedPages: 40,
-            totalPages: 50,
-            visibilityScore: 85,
-            refreshPolicy: 'Weekly refresh',
-        }
-    ];
-}
+export const getSites = (): Promise<Site[]> => {
+    return simulateApiCall(mockSites);
+};
 
-export const getDashboardData = async (siteId: string) => {
-    console.log(`Fetching dashboard data for site: ${siteId}`);
-    await delay(1200);
-
+export const getDashboardData = (siteId: string) => {
+    // Generate some mock chart data
     const visibilityTrend: LineChartData[] = Array.from({ length: 30 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (29 - i));
@@ -129,191 +91,170 @@ export const getDashboardData = async (siteId: string) => {
             brokenLinks: Math.floor(Math.random() * 1),
         };
     });
-    
+
     const pageStatus: PieChartData[] = [
         { name: PageStatus.Optimized, value: 180 },
         { name: PageStatus.NeedsReview, value: 45 },
-        { name: PageStatus.Pending, value: 20 },
-        { name: PageStatus.Failed, value: 5 },
+        { name: PageStatus.Pending, value: 25 },
+        { name: PageStatus.Failed, value: 0 },
     ];
-
+    
     const events: Event[] = [
         { id: 'evt_1', type: 'Site Crawl', status: 'Success', timestamp: new Date().toISOString(), details: 'Crawled 250 pages, found 5 new.' },
-        { id: 'evt_2', type: 'AI Optimization', status: 'Success', timestamp: '2023-10-27T10:00:00Z', details: 'Optimized 15 pages.' },
-        { id: 'evt_3', type: 'IndexNow Ping', status: 'In Progress', timestamp: '2023-10-28T11:00:00Z', details: 'Pinging 15 updated pages.' },
+        { id: 'evt_2', type: 'AI Optimization', status: 'Success', timestamp: new Date().toISOString(), details: 'Optimized 12 pages.' },
+        { id: 'evt_3', type: 'Index Ping', status: 'Success', timestamp: new Date().toISOString(), details: 'Pinged Google & Bing for 12 pages.' },
     ];
 
-    const topImprovedPages: ImprovedPage[] = [
-        { pageId: 'page_1', url: '/blog/ai-in-seo', oldTitle: 'AI and SEO', newTitle: 'The Role of AI in Modern SEO | DualPilot', oldDescription: 'How AI is changing SEO.', newDescription: 'Discover how AI is reshaping search...' },
-        { pageId: 'page_2', url: '/features/automation', oldTitle: 'Automation', newTitle: 'Automate Your Visibility | DualPilot Features', oldDescription: 'Our features.', newDescription: 'Save time and improve rankings with our powerful automation tools.' },
-        { pageId: 'page_3', url: '/pricing', oldTitle: 'Pricing', newTitle: 'Affordable Pricing Plans for Every Business', oldDescription: 'See our plans.', newDescription: 'Find the perfect plan to boost your visibility on search and AI.' },
-    ];
-
-    const siteData = sites.find(s => s.id === siteId) || seedSite;
-
-    return { site: siteData, charts: { visibilityTrend, issuesFixed, pageStatus }, events, topImprovedPages };
+    const data = {
+        site: mockSites.find(s => s.id === siteId) || mockSites[0],
+        charts: { visibilityTrend, issuesFixed, pageStatus },
+        events,
+        topImprovedPages: mockImprovedPages,
+    };
+    return simulateApiCall(data, 1000);
 };
 
-export const getPages = async (siteId: string, {}: {}): Promise<Page[]> => {
-    console.log(`Fetching pages for site: ${siteId}`);
-    if (siteId === 'site_456' && localStorage.getItem('userEmail') === 'empty@example.com') {
-         await delay(800);
-         return [];
-    }
-    await delay(800);
-    return mockPages;
+export const getPages = (siteId: string, options: any): Promise<Page[]> => {
+    return simulateApiCall(mockPages);
 };
 
-export const forceRecrawl = async (pageId: string): Promise<void> => {
-    console.log(`Forcing recrawl for page: ${pageId}`);
-    await delay(1000);
+export const forceRecrawl = (pageId: string): Promise<void> => {
+    console.log(`Force recrawl requested for ${pageId}`);
+    return simulateApiCall(undefined);
 };
 
-export const pingForIndex = async (pageId: string): Promise<void> => {
-    console.log(`Pinging for index for page: ${pageId}`);
-    await delay(1000);
+export const pingForIndex = (pageId: string): Promise<void> => {
+    console.log(`Ping for index sent for ${pageId}`);
+    return simulateApiCall(undefined);
 };
 
-export const getPageDetails = async (pageId: string): Promise<PageDetails> => {
-    console.log(`Getting details for page: ${pageId}`);
-    await delay(700);
-    if (!pageId) {
-        throw new Error("Page ID is required");
-    }
-    return mockPageDetails;
-}
+export const getPageDetails = (pageId: string): Promise<PageDetails> => {
+    const basePage = mockPages.find(p => p.id === pageId) || mockPages[0];
+    const details: PageDetails = {
+        ...basePage,
+        metaTitle: '7 Advanced AI SEO Strategies to Dominate in 2024',
+        metaDescription: 'Unlock the future of search with these 7 advanced AI SEO strategies. Learn how to leverage machine learning for top rankings.',
+        jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", "headline": "AI SEO" },
+        userKeywords: ['ai seo', 'machine learning', 'search engine optimization'],
+        aiKeywords: ['generative ai', 'llm for seo', 'content automation', 'semantic search'],
+        history: [
+            { id: 'out_1', metaTitle: 'AI SEO Tips', metaDescription: 'Some tips for AI SEO.', jsonLd: {}, modelVersion: 'gemini-1.0', createdAt: '2023-10-20T10:00:00Z' },
+            { id: 'out_2', metaTitle: '7 Advanced AI SEO Strategies to Dominate in 2024', metaDescription: 'Unlock the future of search with these 7 advanced AI SEO strategies. Learn how to leverage machine learning for top rankings.', jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", "headline": "AI SEO" }, modelVersion: 'gemini-1.5', createdAt: '2023-10-26T14:30:00Z' },
+        ],
+    };
+    return simulateApiCall(details, 800);
+};
 
-export const optimizePage = async (pageId: string, context?: { title: string, description: string }): Promise<PageOutput> => {
-    console.log(`Optimizing page: ${pageId} with context`, context);
-    await delay(2500);
-     if(context?.title && context?.description) {
-        return {
-            id: `out_${Math.floor(Math.random() * 1000)}`,
-            metaTitle: context.title,
-            metaDescription: context.description,
-            jsonLd: { ...mockPageDetails.jsonLd, headline: context.title },
-            modelVersion: 'gemini-2.0-context',
-            createdAt: new Date().toISOString(),
-        }
-    }
-    return {
-        id: `out_${Math.floor(Math.random() * 1000)}`,
-        metaTitle: 'AI-Powered SEO: The Future is Now | DualPilot',
-        metaDescription: 'Explore the next generation of search engine optimization driven by powerful artificial intelligence. Learn how to leverage AI for content, links, and technical SEO.',
-        jsonLd: { ...mockPageDetails.jsonLd, headline: 'AI-Powered SEO: The Future is Now' },
-        modelVersion: 'gemini-2.0',
+export const optimizePage = (pageId: string): Promise<PageOutput> => {
+    const newOutput: PageOutput = {
+        id: `out_${Math.random()}`,
+        metaTitle: `The Ultimate Guide to AI-Powered SEO | ${new Date().getFullYear()}`,
+        metaDescription: `Discover the absolute best practices for AI-driven SEO. This comprehensive guide covers everything from keyword clustering to schema generation.`,
+        jsonLd: { "@context": "https://schema.org", "@type": "Article", "headline": "The Ultimate Guide to AI-Powered SEO" },
+        modelVersion: 'gemini-2.5-pro',
         createdAt: new Date().toISOString(),
     };
+    return simulateApiCall(newOutput, 2500);
 };
 
-export const getBillingInfo = async (): Promise<{ invoices: Invoice[] }> => {
-    await delay(600);
-    return {
-        invoices: [
-            { id: 'inv_1', date: '2023-10-01', amount: '$99.00', status: 'Paid', pdfUrl: '#' },
-            { id: 'inv_2', date: '2023-09-01', amount: '$99.00', status: 'Paid', pdfUrl: '#' },
-        ]
-    };
-};
-
-export const getTeamMembers = async (): Promise<TeamMember[]> => {
-    await delay(600);
-    return [
-        { id: 'tm_1', name: 'You', email: 'test@example.com', role: 'Admin' },
-        { id: 'tm_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member' },
+export const getBillingInfo = (): Promise<{ invoices: Invoice[] }> => {
+    const invoices: Invoice[] = [
+        { id: 'inv_1', date: '2023-10-01', amount: '$99.00', status: 'Paid', pdfUrl: '#' },
+        { id: 'inv_2', date: '2023-09-01', amount: '$99.00', status: 'Paid', pdfUrl: '#' },
     ];
+    return simulateApiCall({ invoices });
 };
 
-export const getReportData = async (dateRange: { start: Date, end: Date }, compare: boolean): Promise<ReportData> => {
-    console.log('Fetching report data', dateRange, compare);
-    await delay(1500);
-    
-    const generateGscData = (days: number, offset = 0): GscDataPoint[] => Array.from({ length: days }, (_, i) => {
+export const getTeamMembers = (): Promise<TeamMember[]> => {
+    const members: TeamMember[] = [
+        { id: 'user_1', name: 'Alex Smith', email: 'alex@example.com', role: 'Admin' },
+        { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member' },
+    ];
+    return simulateApiCall(members);
+};
+
+const generateGscData = (days: number, offset = 0, factor = 1): GscDataPoint[] => {
+    return Array.from({ length: days }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - (days - 1 - i) - offset);
+        const clicks = (50 + Math.sin(i / 5) * 20 + Math.random() * 10) * factor;
+        const impressions = (1000 + Math.sin(i / 5) * 300 + Math.random() * 200) * factor;
         return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            clicks: 100 + Math.sin(i / 5) * 20 + Math.random() * 10 + (offset > 0 ? -20 : 0),
-            impressions: 2000 + Math.sin(i / 5) * 300 + Math.random() * 200 + (offset > 0 ? -300 : 0),
+            date: date.toLocaleDateString('en-CA'), // YYYY-MM-DD
+            clicks: Math.max(0, clicks),
+            impressions: Math.max(0, impressions),
         };
     });
+};
 
-    const generateAiCoverage = (offset = 0): AiCoverageData[] => [
-        { name: 'Covered', value: 85 + offset },
-        { name: 'Not Covered', value: 15 - offset },
-    ];
-
+export const getReportData = (dateRange: { start: Date, end: Date }, compare: boolean): Promise<ReportData> => {
     const days = Math.round((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 3600 * 24)) + 1;
     
-    return {
-        summary: "This period saw a significant 15% increase in organic clicks, driven by a 12% rise in impressions. The 'AI in SEO' blog post was a top performer. AI Schema Coverage improved by 5 percentage points, now covering 85% of your site. Focus on converting the increased traffic from your '/features' pages next period.",
+    const data: ReportData = {
+        summary: "This period saw a significant 15% increase in organic clicks, primarily driven by optimizations to blog content. The 'AI SEO Strategies' page was a top performer. AI Schema Coverage improved by 5 points, but there's still room to grow by implementing Product schema on shop pages.",
         gscPerformance: {
             current: generateGscData(days),
-            previous: generateGscData(days, days),
+            previous: compare ? generateGscData(days, days, 0.85) : [],
         },
         aiCoverage: {
-            current: generateAiCoverage(),
-            previous: generateAiCoverage(-5),
+            current: [{ name: 'Covered', value: 78 }, { name: 'Not Covered', value: 22 }],
+            previous: [{ name: 'Covered', value: 73 }, { name: 'Not Covered', value: 27 }],
         },
-        topPageImprovements: [
-            { url: '/blog/post-1', scoreChange: 15 },
-            { url: '/features/new', scoreChange: 12 },
-            { url: '/about-us', scoreChange: 9 },
-            { url: '/pricing', scoreChange: 7 },
+        topPageImprovements: mockImprovedPages.map(p => ({ url: p.url, scoreChange: Math.floor(Math.random() * 5 + 3) })),
+        optimizationActivity: mockPages.slice(0, 4).map(p => ({
+            pageId: p.id,
+            url: p.url,
+            date: new Date().toISOString(),
+            scoreChange: Math.floor(Math.random() * 5 + 1),
+            keywords: ['ai seo', 'optimization', 'schema'],
+        })),
+        annotations: [
+            { date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA'), type: 'Optimization', description: 'Optimized blog pages' },
+            { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-CA'), type: 'Schema', description: 'Added FAQ Schema' }
         ],
-        optimizationActivity: [
-            { pageId: 'page_1', url: '/blog/post-1', date: '2023-10-26', scoreChange: 15, keywords: ['AI', 'SEO', 'future'] },
-            { pageId: 'page_2', url: '/features/new', date: '2023-10-25', scoreChange: 12, keywords: ['automation', 'new feature'] },
-        ]
+        impactAnalysis: [
+            { type: 'AI Blog Optimizations', impact: 'High', description: 'Generated a 25% lift in clicks for targeted blog posts.' },
+            { type: 'FAQ Schema Rollout', impact: 'Medium', description: 'Increased SERP real estate, contributing to a 5% CTR improvement.' },
+        ],
     };
+    return simulateApiCall(data, 1200);
 };
 
-export const getAiVisibilityData = async () => {
-    await delay(1000);
-    const generateGscData = (days: number): GscDataPoint[] => Array.from({ length: days }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (days - 1 - i));
-        return {
-            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            clicks: 5 + Math.sin(i / 2) * 2 + Math.random() * 3, // Lower numbers for "AI" queries
-            impressions: 150 + Math.sin(i / 2) * 20 + Math.random() * 15,
-        };
-    });
-
-    return {
-        pages: mockPages.filter(p => p.status !== PageStatus.Pending),
-        gscData: generateGscData(30),
-        siteProfile: localStorage.getItem('siteProfile') || 'A demo SaaS company specializing in AI-powered SEO tools.'
-    };
+export const getAiVisibilityData = (): Promise<{ pages: Page[], siteProfile: string }> => {
+    const profile = localStorage.getItem('siteProfile') || "DualPilot is a SaaS company providing an automated AI and Search visibility engine. It helps users audit pages, generate AI-ready metadata and schema, and maintain visibility across classic search engines and AI assistants.";
+    return simulateApiCall({ pages: mockPages, siteProfile: profile });
 };
 
+export const getSiteProfile = (): Promise<string> => {
+    const profile = localStorage.getItem('siteProfile') || "DualPilot is a SaaS company providing an automated AI and Search visibility engine. It helps users audit pages, generate AI-ready metadata and schema, and maintain visibility across classic search engines and AI assistants.";
+    return simulateApiCall(profile);
+};
 
+// FIX: Correctly initialize GoogleGenAI as per guidelines.
+const ai = new GoogleGenAI({apiKey: process.env.API_KEY || ''});
 export const generateAiSummary = async (prompt: string): Promise<string> => {
-    await delay(3000);
-    return `Based on your request to analyze the competition for "AI-powered SEO tools", here are the key takeaways:
-
-1.  **Top Competitors:** Your main competitors are SEMrush, Ahrefs, and Moz. They dominate the SERPs with comprehensive guides and case studies.
-2.  **Content Gaps:** There's a noticeable lack of content focusing on AI-driven schema generation and real-time AI conversation readiness. This is a significant opportunity.
-3.  **Emerging Keywords:** Look to target long-tail keywords like "how to prepare website for AI assistants" and "automated schema markup for e-commerce".
-
-**Suggested Action:** Create a detailed blog post or whitepaper titled "The Ultimate Guide to AI Assistant Readiness" targeting these identified gaps and keywords.`;
-};
-
-export const getSiteProfile = async (): Promise<string> => {
-    await delay(100);
-    return localStorage.getItem('siteProfile') || 'A demo SaaS company specializing in AI-powered SEO tools.';
-}
-
-const sites: Site[] = [
-    seedSite,
-    {
-        id: 'site_456',
-        siteName: 'My Super Blog',
-        domain: 'my-super-blog.com',
-        plan: PlanId.Essentials,
-        optimizedPages: 40,
-        totalPages: 50,
-        visibilityScore: 85,
-        refreshPolicy: 'Weekly refresh',
+    // This is the only function that would make a real API call.
+    // For the demo, we'll return a mock response to avoid needing a real key.
+    
+    // START: Real implementation example
+    /*
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (e) {
+        console.error(e);
+        return "Error: Could not connect to the AI model. Please check your API key.";
     }
-];
+    */
+    // END: Real implementation example
+
+    // Mock implementation for the demo
+    await new Promise(res => setTimeout(res, 1500));
+    if (prompt.toLowerCase().includes('summarize')) {
+        return "This blog post discusses advanced strategies for AI-powered SEO. Key takeaways include leveraging natural language processing for keyword research, automating schema generation, and using AI to create contextually relevant meta descriptions that improve click-through rates.";
+    }
+    return "Based on the site profile, DualPilot is an AI-powered SEO tool designed to improve online visibility. Key features include automated metadata and schema generation, a proprietary 'Visibility Score', and continuous site monitoring. It competes with other SEO platforms by focusing on readiness for modern AI assistants in addition to traditional search engines.";
+};

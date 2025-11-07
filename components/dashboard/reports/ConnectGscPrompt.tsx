@@ -1,17 +1,12 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import Card from '../../common/Card';
 import Button from '../../common/Button';
 
-const ConnectGscPrompt: React.FC = () => {
-    const navigate = useNavigate();
+interface ConnectGscPromptProps {
+    onConnectClick: () => void;
+}
 
-    // In a real app, this might go to a specific settings page,
-    // but for the demo, we'll link to the start of onboarding.
-    const handleConnect = () => {
-        navigate('/onboarding');
-    };
-
+const ConnectGscPrompt: React.FC<ConnectGscPromptProps> = ({ onConnectClick }) => {
     return (
         <Card>
             <div className="text-center p-8">
@@ -25,7 +20,7 @@ const ConnectGscPrompt: React.FC = () => {
                     To see your website's real-world performance data like clicks and impressions, connect your GSC account.
                 </p>
                 <div className="mt-6">
-                    <Button onClick={handleConnect}>
+                    <Button onClick={onConnectClick}>
                         Connect Account
                     </Button>
                 </div>
