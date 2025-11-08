@@ -4,6 +4,7 @@ import { useSite } from '../site/SiteContext';
 import { useAuth } from '../auth/AuthContext';
 
 const navItems = [
+    { path: 'profile', label: 'Profile', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'site', label: 'Site', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'billing', label: 'Plan & Billing', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'branding', label: 'Branding', requiredRole: ['Admin', 'Member'], requiredPlan: ['agency'], isPremium: true },

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
 import { TeamMember } from '../../types';
 import { getCurrentUser } from '../../services/api';
 
@@ -7,6 +7,7 @@ interface AuthContextType {
   user: TeamMember | null;
   login: (email: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,29 +17,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkLoggedInUser = async () => {
-      const storedAuth = localStorage.getItem('isAuthenticated') === 'true';
-      const storedEmail = localStorage.getItem('userEmail');
-      if (storedAuth && storedEmail) {
-        try {
-          const userData = await getCurrentUser(storedEmail);
-          if (userData) {
-            setUser(userData);
-            setIsAuthenticated(true);
-          } else {
-             // Handle case where user in local storage is not in DB
-             logout();
-          }
-        } catch (error) {
-            console.error("Failed to fetch logged in user data", error);
-            logout(); // Log out on error
+  const fetchUser = useCallback(async () => {
+    const storedAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const storedEmail = localStorage.getItem('userEmail');
+    if (storedAuth && storedEmail) {
+      try {
+        const userData = await getCurrentUser(storedEmail);
+        if (userData) {
+          setUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          logout();
         }
+      } catch (error) {
+        console.error("Failed to fetch logged in user data", error);
+        logout();
       }
-      setIsLoading(false);
-    };
-    checkLoggedInUser();
+    }
+    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const login = async (email: string) => {
     const userData = await getCurrentUser(email);
@@ -59,14 +60,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('gsc_connected');
     setIsAuthenticated(false);
   };
+
+  const refreshUser = async () => {
+    setIsLoading(true);
+    await fetchUser();
+  }
   
-  // Don't render children until we've checked for an active session
   if (isLoading) {
     return null; // Or a loading spinner
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

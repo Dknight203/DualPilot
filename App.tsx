@@ -18,6 +18,7 @@ import { AuthProvider } from './components/auth/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { SiteProvider } from './components/site/SiteContext';
 import SettingsLayout from './components/layout/SettingsLayout';
+import ProfileSettings from './pages/settings/Profile';
 import SiteSettings from './pages/settings/Site';
 import BillingSettings from './pages/settings/Billing';
 import TeamSettings from './pages/settings/Team';
@@ -25,6 +26,8 @@ import BrandingSettings from './pages/settings/Branding';
 import ApiSettings from './pages/settings/Api';
 import CmsSettings from './pages/settings/Cms';
 import DangerZone from './pages/settings/DangerZone';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 const AppLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800">
@@ -48,6 +51,8 @@ const App: React.FC = () => {
               <Route path="pricing" element={<PricingPage />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="signup" element={<SignupPage />} />
+              <Route path="forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="reset-password/:token" element={<ResetPasswordPage />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route path="onboarding" element={<OnboardingPage />} />
@@ -58,7 +63,8 @@ const App: React.FC = () => {
                 <Route path="admin" element={<AdminPage />} />
 
                 <Route path="settings" element={<SettingsLayout />}>
-                  <Route index element={<Navigate to="site" replace />} />
+                  <Route index element={<Navigate to="profile" replace />} />
+                  <Route path="profile" element={<ProfileSettings />} />
                   <Route path="site" element={<SiteSettings />} />
                   <Route path="billing" element={<BillingSettings />} />
                   <Route path="team" element={<TeamSettings />} />

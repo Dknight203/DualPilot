@@ -120,6 +120,7 @@ export interface TeamMember {
     role: 'Admin' | 'Member';
     status: 'Active' | 'Pending Invitation';
     isOwner?: boolean;
+    avatarUrl?: string;
 }
 
 export interface ApiKey {

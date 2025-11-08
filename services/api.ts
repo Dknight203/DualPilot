@@ -44,10 +44,10 @@ const mockApiKeys: ApiKey[] = [
 ];
 
 const mockTeamMembers: TeamMember[] = [
-    { id: 'user_1', name: 'Alex Smith (You)', email: 'test@example.com', role: 'Admin', status: 'Active', isOwner: true },
-    { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member', status: 'Active' },
-    { id: 'user_3', name: 'Mike Johnson', email: 'mike@example.com', role: 'Admin', status: 'Active' },
-    { id: 'user_4', name: 'Sarah Lee', email: 'agency@example.com', role: 'Admin', status: 'Active', isOwner: true },
+    { id: 'user_1', name: 'Alex Smith (You)', email: 'test@example.com', role: 'Admin', status: 'Active', isOwner: true, avatarUrl: `https://i.pravatar.cc/150?u=test@example.com` },
+    { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member', status: 'Active', avatarUrl: `https://i.pravatar.cc/150?u=jane@example.com` },
+    { id: 'user_3', name: 'Mike Johnson', email: 'mike@example.com', role: 'Admin', status: 'Active', avatarUrl: `https://i.pravatar.cc/150?u=mike@example.com` },
+    { id: 'user_4', name: 'Sarah Lee', email: 'agency@example.com', role: 'Admin', status: 'Active', isOwner: true, avatarUrl: `https://i.pravatar.cc/150?u=agency@example.com` },
 ];
 
 let mockCmsConnection: CmsConnection | null = null;
@@ -204,10 +204,37 @@ export const getCurrentUser = (email: string): Promise<TeamMember | undefined> =
     const user = mockTeamMembers.find(member => member.email === email);
     // If not found, create a placeholder Admin user for demo purposes
     if (!user && email) {
-        return simulateApiCall({ id: 'user_new', name: 'New User', email, role: 'Admin', status: 'Active' });
+        const newUser: TeamMember = { id: 'user_new', name: 'New User', email, role: 'Admin', status: 'Active', avatarUrl: `https://i.pravatar.cc/150?u=${email}`};
+        mockTeamMembers.push(newUser);
+        return simulateApiCall(newUser);
     }
     return simulateApiCall(user);
 };
+
+export const updateUserProfile = (userId: string, data: Partial<Pick<TeamMember, 'name' | 'email' | 'avatarUrl'>>): Promise<TeamMember> => {
+    const memberIndex = mockTeamMembers.findIndex(m => m.id === userId);
+    if (memberIndex > -1) {
+        mockTeamMembers[memberIndex] = { ...mockTeamMembers[memberIndex], ...data };
+        
+        // If email changed, we need to update localStorage for the demo to work
+        if(data.email) {
+            localStorage.setItem('userEmail', data.email);
+        }
+        
+        return simulateApiCall(mockTeamMembers[memberIndex]);
+    }
+    return Promise.reject('User not found');
+};
+
+export const changePassword = (userId: string, currentPass: string, newPass: string): Promise<{ success: boolean }> => {
+    // In a real app, this would be a secure backend call.
+    // For the demo, we'll just pretend it always works if the current pass is "password".
+    if (currentPass === 'password') {
+        return simulateApiCall({ success: true }, 1000);
+    }
+    return Promise.reject('Incorrect current password');
+};
+
 
 export const getTeamMembers = (): Promise<TeamMember[]> => {
     const currentUserEmail = localStorage.getItem('userEmail');
@@ -222,6 +249,7 @@ export const inviteTeamMember = (email: string, role: 'Admin' | 'Member'): Promi
         email,
         role,
         status: 'Pending Invitation',
+        avatarUrl: `https://i.pravatar.cc/150?u=${email}`,
     };
     mockTeamMembers.unshift(newMember);
     return simulateApiCall(newMember);
@@ -368,6 +396,19 @@ export const updateBrandingLogo = (logoUrl: string): Promise<BrandingSettings> =
 export const removeBrandingLogo = (): Promise<{ success: boolean }> => {
     localStorage.removeItem('brandingSettings');
     return simulateApiCall({ success: true });
+};
+
+// --- PASSWORD RESET API ---
+export const requestPasswordReset = (email: string): Promise<{ success: boolean }> => {
+    console.log(`Simulating password reset request for: ${email}`);
+    // In a real app, this would generate a token and send an email.
+    return simulateApiCall({ success: true }, 1000);
+};
+
+export const resetPassword = (token: string, newPassword: string): Promise<{ success: boolean }> => {
+    console.log(`Simulating password reset for token: ${token} with new password.`);
+    // In a real app, this would validate the token and update the user's password.
+    return simulateApiCall({ success: true }, 1000);
 };
 
 

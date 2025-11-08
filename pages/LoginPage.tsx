@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/common/Button';
 import { useAuth } from '../components/auth/AuthContext';
 import OAuthButton from '../components/auth/OAuthButton';
+import Toast from '../components/common/Toast';
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -10,7 +11,18 @@ const LoginPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+    // Handle toast messages passed from redirects
+    useEffect(() => {
+        if (location.state?.toast) {
+            setToast(location.state.toast);
+            // Clear the location state to prevent toast from re-appearing on refresh
+            navigate(location.pathname, { replace: true });
+        }
+    }, [location, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -65,6 +77,7 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">Sign in to your account</h2>
                 <p className="mt-2 text-center text-sm text-slate-600">
@@ -110,7 +123,7 @@ const LoginPage: React.FC = () => {
 
                         <div className="flex items-center justify-between">
                             <div className="text-sm">
-                                <a href="#" className="font-medium text-accent-default hover:text-accent-hover">Forgot your password?</a>
+                                <Link to="/forgot-password" className="font-medium text-accent-default hover:text-accent-hover">Forgot your password?</Link>
                             </div>
                         </div>
 
