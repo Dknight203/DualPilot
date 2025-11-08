@@ -47,8 +47,12 @@ const NavBar: React.FC = () => {
               DualPilot
             </NavLink>
             <div className="hidden md:flex items-center space-x-6">
-              <NavLink to="/pricing" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Pricing</NavLink>
-              <NavLink to="/scan" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Free Scan</NavLink>
+              {!isAuthenticated && (
+                <>
+                  <NavLink to="/pricing" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Pricing</NavLink>
+                  <NavLink to="/scan" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Free Scan</NavLink>
+                </>
+              )}
               {isAuthenticated && (
                 <>
                   <NavLink to="/dashboard" className={({isActive}) => isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses}>Dashboard</NavLink>

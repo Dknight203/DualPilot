@@ -28,6 +28,7 @@ import CmsSettings from './pages/settings/Cms';
 import DangerZone from './pages/settings/DangerZone';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import DashboardLayout from './components/layout/DashboardLayout';
 
 const AppLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800">
@@ -45,6 +46,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <SiteProvider>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<AppLayout />}>
               <Route index element={<LandingPage />} />
               <Route path="scan" element={<ScanPage />} />
@@ -53,8 +55,11 @@ const App: React.FC = () => {
               <Route path="signup" element={<SignupPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password/:token" element={<ResetPasswordPage />} />
-              
-              <Route element={<ProtectedRoute />}>
+            </Route>
+            
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<DashboardLayout />}>
                 <Route path="onboarding" element={<OnboardingPage />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="dashboard/ai-visibility" element={<AiVisibilityPage />} />
