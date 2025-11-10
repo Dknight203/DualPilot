@@ -11,7 +11,7 @@ const SearchResultPreview: React.FC<SearchResultPreviewProps> = ({ title, descri
     const displayUrl = `https://example.com${url}`;
 
     return (
-        <div className="font-sans p-4 border border-slate-200 rounded-lg bg-white">
+        <div className="font-sans p-4 border border-slate-200 rounded-lg bg-white shadow-lg">
             <div className="flex items-center mb-1">
                 <span className="text-sm text-slate-600">{displayUrl.split('?')[0]}</span>
             </div>

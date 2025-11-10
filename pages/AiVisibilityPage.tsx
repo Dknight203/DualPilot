@@ -90,7 +90,7 @@ const AiVisibilityPage: React.FC = () => {
     }
 
     return (
-        <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="bg-white p-4 sm:p-6 lg:p-8">
              {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
              {isEditProfileModalOpen && (
                 <EditProfileModal

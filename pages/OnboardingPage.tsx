@@ -41,7 +41,7 @@ const OnboardingPage: React.FC = () => {
     };
 
     return (
-        <div className="bg-slate-50 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-5xl mx-auto">
                 <div className="mb-12 flex justify-center">
                     <Stepper steps={steps} currentStep={currentStep - 1} onStepClick={handleStepClick} />

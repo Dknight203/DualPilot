@@ -15,7 +15,7 @@ const NavBar: React.FC = () => {
     navigate('/');
   };
   
-  const navLinkClasses = "text-sm font-medium text-gray-700 hover:text-brand-blue transition-colors";
+  const navLinkClasses = "text-sm font-medium text-slate-600 hover:text-brand-blue transition-colors";
   const activeNavLinkClasses = "text-brand-blue font-semibold";
 
   const renderAuthenticatedNav = () => {
@@ -39,7 +39,7 @@ const NavBar: React.FC = () => {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200">
+    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100 shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">

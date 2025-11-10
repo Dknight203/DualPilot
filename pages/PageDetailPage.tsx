@@ -75,7 +75,7 @@ const PageDetailPage: React.FC = () => {
     const currentOutput = page.history[page.history.length-1] || { metaTitle: page.metaTitle, metaDescription: page.metaDescription, jsonLd: page.jsonLd };
 
     return (
-        <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="bg-white p-4 sm:p-6 lg:p-8">
             {historyModal && (
                 <HistoryDiffModal
                     oldOutput={historyModal.old}

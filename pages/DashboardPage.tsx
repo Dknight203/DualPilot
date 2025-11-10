@@ -217,7 +217,7 @@ const DashboardPage: React.FC = () => {
             {isTourActive && <GuidedTour steps={dashboardTourSteps} onEnd={() => setIsTourActive(false)} isGscConnected={isGscConnected} />}
             {isGscModalOpen && <GscConnectModal onClose={() => setIsGscModalOpen(false)} onSuccess={handleGscConnectSuccess} />}
             
-            <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
+            <div className="bg-white p-4 sm:p-6 lg:p-8">
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
                 <div className="max-w-7xl mx-auto">
                     <div className="flex justify-between items-center">

@@ -31,7 +31,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 
 const AppLayout: React.FC = () => (
-  <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800">
+  <div className="flex flex-col min-h-screen text-slate-600">
     <NavBar />
     <main className="flex-grow">
       <Outlet />

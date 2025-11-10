@@ -155,7 +155,7 @@ const ReportsPage: React.FC = () => {
                     onSuccess={handleGscConnectSuccess}
                 />
             )}
-            <div className="bg-slate-100 min-h-screen p-4 sm:p-6 lg:p-8">
+            <div className="bg-white min-h-screen p-4 sm:p-6 lg:p-8">
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">

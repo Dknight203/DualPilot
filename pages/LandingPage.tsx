@@ -66,7 +66,7 @@ const Hero = () => {
 
 // How It Works Section Component
 const HowItWorks = () => (
-  <div className="bg-slate-50">
+  <div className="bg-white">
     <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8 sm:py-20">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900">How it works</h2>
@@ -130,7 +130,7 @@ const LandingPage: React.FC = () => {
         <>
             <Hero />
             <HowItWorks />
-            <div className="bg-slate-50 py-20">
+            <div className="bg-white py-20">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                  <div className="text-center">
                     <h2 className="text-3xl font-bold tracking-tight text-slate-900">Simple, transparent pricing</h2>

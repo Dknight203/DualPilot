@@ -19,7 +19,7 @@ const AdminPage: React.FC = () => {
     };
 
     return (
-        <div className="bg-slate-100 p-4 sm:p-6 lg:p-8">
+        <div className="bg-white p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
                 <h1 className="text-3xl font-bold text-slate-900">Admin - Client Accounts</h1>
                 <p className="mt-2 text-slate-600">Manage your client sites and provide support.</p>
