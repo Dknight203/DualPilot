@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import Stepper from '../components/onboarding/Stepper';
+import StepEnterDomain from '../components/onboarding/StepEnterDomain';
 import StepConfirmProfile from '../components/onboarding/StepConfirmProfile';
 import StepPlan from '../components/onboarding/StepPlan';
 import StepGscConnect from '../components/onboarding/StepGscConnect';
-import StepIntegrations from '../components/onboarding/StepIntegrations'; // Changed from StepConnect
+import StepIntegrations from '../components/onboarding/StepIntegrations';
 import StepScan from '../components/onboarding/StepScan';
 
 const OnboardingPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
-    const steps = ['Your Profile', 'Choose Plan', 'Connect GSC', 'Integrations', 'First Scan']; // Updated step name
+    const [domain, setDomain] = useState<string | null>(null);
+    const steps = ['Your Site', 'Your Profile', 'Choose Plan', 'Connect GSC', 'Integrations', 'First Scan'];
 
     const handleNextStep = () => {
         if (currentStep < steps.length) {
@@ -16,8 +18,12 @@ const OnboardingPage: React.FC = () => {
         }
     };
     
+    const handleDomainEntered = (enteredDomain: string) => {
+        setDomain(enteredDomain);
+        handleNextStep();
+    };
+
     const handleStepClick = (step: number) => {
-        // Allow going back to previous completed steps
         if (step < currentStep) {
             setCurrentStep(step);
         }
@@ -26,14 +32,18 @@ const OnboardingPage: React.FC = () => {
     const renderStep = () => {
         switch (currentStep) {
             case 1:
-                return <StepConfirmProfile onProfileConfirmed={handleNextStep} />;
+                return <StepEnterDomain onDomainEntered={handleDomainEntered} />;
             case 2:
-                return <StepPlan onPlanSelected={handleNextStep} />;
+                if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
+                return <StepConfirmProfile domain={domain} onProfileConfirmed={handleNextStep} />;
             case 3:
-                return <StepGscConnect onNext={handleNextStep} />;
+                return <StepPlan onPlanSelected={handleNextStep} />;
             case 4:
-                return <StepIntegrations onNext={handleNextStep} />; // Changed component
+                return <StepGscConnect onNext={handleNextStep} />;
             case 5:
+                 if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
+                return <StepIntegrations domain={domain} onNext={handleNextStep} />;
+            case 6:
                 return <StepScan />;
             default:
                 return <div>Unknown Step</div>;

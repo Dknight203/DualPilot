@@ -29,11 +29,11 @@ const InfoItem: React.FC<{ title: string; children: React.ReactNode }> = ({ titl
 );
 
 interface StepIntegrationsProps {
+    domain: string;
     onNext: () => void;
 }
 
-const StepIntegrations: React.FC<StepIntegrationsProps> = ({ onNext }) => {
-    const [domain, setDomain] = useState('');
+const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, onNext }) => {
     const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verifying' | 'verified' | 'failed'>('pending');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
     const [showInstructions, setShowInstructions] = useState(false);
@@ -46,14 +46,6 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ onNext }) => {
     const [wpPassword, setWpPassword] = useState('');
 
     const SCRIPT_TAG = `<script defer src="/dual.js"></script>`;
-    
-    useEffect(() => {
-        // Retrieve domain saved during profile confirmation
-        const savedDomain = localStorage.getItem('onboardingDomain');
-        if (savedDomain) {
-            setDomain(savedDomain);
-        }
-    }, []);
 
     const handleVerify = async () => {
         if (!domain) {
