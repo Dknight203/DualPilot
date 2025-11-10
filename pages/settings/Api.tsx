@@ -9,6 +9,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ApiKeyList from '../../components/settings/ApiKeyList';
 import ApiKeyModal from '../../components/settings/ApiKeyModal';
 import Toast from '../../components/common/Toast';
+import Input from '../../components/common/Input';
 
 const ApiSettings: React.FC = () => {
     const { activeSite } = useSite();
@@ -73,7 +74,7 @@ const ApiSettings: React.FC = () => {
         <div className="flex items-center gap-2">
             API Access
             {activeSite?.plan !== 'agency' && (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002 2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" /></svg>
             )}
         </div>
     );
@@ -92,7 +93,7 @@ const ApiSettings: React.FC = () => {
                                 <form onSubmit={handleGenerateKey} className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-50 rounded-lg">
                                     <div className="flex-grow w-full">
                                         <label htmlFor="keyName" className="sr-only">Key Name</label>
-                                        <input type="text" id="keyName" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g., My CMS Integration" className="w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900" />
+                                        <Input type="text" id="keyName" value={newKeyName} onChange={(e) => setNewKeyName(e.target.value)} placeholder="e.g., My CMS Integration" />
                                     </div>
                                     <Button type="submit" isLoading={isGenerating} className="w-full sm:w-auto flex-shrink-0">Generate Key</Button>
                                 </form>

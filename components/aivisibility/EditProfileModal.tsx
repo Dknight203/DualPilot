@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
+import Textarea from '../common/Textarea';
 
 interface EditProfileModalProps {
     currentProfile: string;
@@ -29,11 +30,11 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ currentProfile, onS
                 </div>
                 <div className="p-6">
                     <p className="text-sm text-slate-600 mb-2">This summary is used by the AI to understand your business. Make it concise and accurate.</p>
-                    <textarea
+                    <Textarea
                         value={profile}
                         onChange={(e) => setProfile(e.target.value)}
                         rows={5}
-                        className="w-full text-sm border-slate-300 rounded-md bg-white text-slate-900 focus:ring-accent-default focus:border-accent-default"
+                        className="text-sm"
                     />
                 </div>
                  <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">

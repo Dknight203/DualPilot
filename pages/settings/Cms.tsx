@@ -6,6 +6,7 @@ import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Toast from '../../components/common/Toast';
 import CmsHelpModal from '../../components/settings/CmsHelpModal';
+import Input from '../../components/common/Input';
 
 const CmsSettings: React.FC = () => {
     const [cmsConnection, setCmsConnection] = useState<CmsConnection | null>(null);
@@ -84,18 +85,18 @@ const CmsSettings: React.FC = () => {
                                 <p className="text-sm text-slate-600">Connect your WordPress site to enable direct publishing of AI-optimized content.</p>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">WordPress Site URL</label>
-                                    <input type="url" value={wpSiteUrl} onChange={(e) => setWpSiteUrl(e.target.value)} placeholder="https://yourblog.com" required className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900" />
+                                    <Input type="url" value={wpSiteUrl} onChange={(e) => setWpSiteUrl(e.target.value)} placeholder="https://yourblog.com" required className="mt-1"/>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">Application Username</label>
-                                    <input type="text" value={wpUsername} onChange={(e) => setWpUsername(e.target.value)} placeholder="dualpilot_user" required className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900" />
+                                    <Input type="text" value={wpUsername} onChange={(e) => setWpUsername(e.target.value)} placeholder="dualpilot_user" required className="mt-1"/>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">
                                         Application Password
                                         <button type="button" onClick={() => setIsCmsHelpModalOpen(true)} className="ml-2 text-xs text-accent-default hover:underline">(How?)</button>
                                     </label>
-                                    <input type="password" value={wpPassword} onChange={(e) => setWpPassword(e.target.value)} placeholder="xxxx ... xxxx" required className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900 font-mono" />
+                                    <Input type="password" value={wpPassword} onChange={(e) => setWpPassword(e.target.value)} placeholder="xxxx ... xxxx" required className="mt-1 font-mono"/>
                                 </div>
                                 <div className="text-right pt-2">
                                     <Button type="submit" isLoading={isConnectingCms}>Connect WordPress</Button>

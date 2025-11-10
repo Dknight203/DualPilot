@@ -4,6 +4,14 @@ import Button from '../components/common/Button';
 import { useAuth } from '../components/auth/AuthContext';
 import OAuthButton from '../components/auth/OAuthButton';
 import Toast from '../components/common/Toast';
+import AuthCard from '../components/auth/AuthCard';
+import Input from '../components/common/Input';
+
+const ChartBarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+    </svg>
+);
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -76,66 +84,62 @@ const LoginPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <>
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">Sign in to your account</h2>
-                <p className="mt-2 text-center text-sm text-slate-600">
-                    Or{' '}
-                    <Link to="/signup" className="font-medium text-accent-default hover:text-accent-hover">
-                        create a new account
-                    </Link>
-                </p>
-            </div>
-
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                    <div className="space-y-4">
-                        <OAuthButton provider="google" onClick={handleOAuthLogin} />
-                        <OAuthButton provider="microsoft" onClick={handleOAuthLogin} />
-                    </div>
-
-                    <div className="mt-6 relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-slate-300" />
-                        </div>
-                        <div className="relative flex justify-center text-sm">
-                            <span className="px-2 bg-white text-slate-500">Or continue with email</span>
-                        </div>
-                    </div>
-
-                    <form className="mt-6 space-y-6" onSubmit={handleLogin}>
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
-                            <div className="mt-1">
-                                <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
-                            <div className="mt-1">
-                                <input id="password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900" />
-                            </div>
-                        </div>
-
-                        {error && <p className="text-sm text-red-600">{error}</p>}
-
-                        <div className="flex items-center justify-between">
-                            <div className="text-sm">
-                                <Link to="/forgot-password" className="font-medium text-accent-default hover:text-accent-hover">Forgot your password?</Link>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Button type="submit" isLoading={isLoading} className="w-full">
-                                Sign in
-                            </Button>
-                        </div>
-                    </form>
+            <AuthCard
+                icon={<ChartBarIcon />}
+                title="Sign in to your account"
+                subtitle={(
+                    <>
+                        Enter your credentials to access DualPilot
+                    </>
+                )}
+            >
+                <div className="space-y-4">
+                    <OAuthButton provider="google" onClick={handleOAuthLogin} />
+                    <OAuthButton provider="microsoft" onClick={handleOAuthLogin} />
                 </div>
-            </div>
-        </div>
+
+                <div className="mt-6 relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-slate-500">Or continue with email</span>
+                    </div>
+                </div>
+
+                <form className="mt-6 space-y-6" onSubmit={handleLogin}>
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
+                        <div className="mt-1">
+                            <Input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-slate-700">Password</label>
+                        <div className="mt-1">
+                            <Input id="password" name="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                        </div>
+                    </div>
+
+                    {error && <p className="text-sm text-red-600">{error}</p>}
+
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm">
+                            <Link to="/forgot-password" className="font-medium text-accent-default hover:text-accent-hover">Forgot your password?</Link>
+                        </div>
+                    </div>
+
+                    <div>
+                        <Button type="submit" isLoading={isLoading} className="w-full">
+                            Sign in
+                        </Button>
+                    </div>
+                </form>
+            </AuthCard>
+        </>
     );
 };
 

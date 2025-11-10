@@ -10,6 +10,8 @@ import Playbook from '../components/aivisibility/Playbook';
 import Toast from '../components/common/Toast';
 import ScoreGaugeSection from '../components/aivisibility/ScoreGaugeSection';
 import EditProfileModal from '../components/aivisibility/EditProfileModal';
+import Textarea from '../components/common/Textarea';
+import Select from '../components/common/Select';
 
 const AiVisibilityPage: React.FC = () => {
     const [pages, setPages] = useState<Page[]>([]);
@@ -126,21 +128,21 @@ const AiVisibilityPage: React.FC = () => {
                     {mode === 'page' && (
                         <div className="mb-4">
                             <label htmlFor="page-select" className="block text-sm font-medium text-slate-700 mb-1">Select a Page</label>
-                            <select id="page-select" value={selectedPageId} onChange={e => setSelectedPageId(e.target.value)} className="w-full border-slate-300 rounded-md text-sm bg-white text-slate-900">
+                            <Select id="page-select" value={selectedPageId} onChange={e => setSelectedPageId(e.target.value)}>
                                 {pages.map(p => <option key={p.id} value={p.id}>{p.url}</option>)}
-                            </select>
+                            </Select>
                         </div>
                     )}
 
                     <form onSubmit={handleGenerate} className="space-y-4">
                          <div>
                             <label htmlFor="ai-prompt" className="sr-only">Your Query</label>
-                            <textarea
+                            <Textarea
                                 id="ai-prompt"
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 rows={3}
-                                className="flex-grow block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-accent-default focus:border-accent-default bg-white text-slate-900"
+                                className="flex-grow"
                                 placeholder={getPlaceholder()}
                                 disabled={isGenerating}
                             />

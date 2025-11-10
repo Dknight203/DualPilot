@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Card from '../common/Card';
 import Button from '../common/Button';
+import Textarea from '../common/Textarea';
 
 interface KeywordEditorProps {
     userKeywords: string[];
@@ -22,10 +23,10 @@ const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords 
                 <label htmlFor="keywords" className="block text-sm font-medium text-slate-700">
                     Your Keywords (comma-separated)
                 </label>
-                <textarea
+                <Textarea
                     id="keywords"
                     rows={3}
-                    className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-accent-default focus:border-accent-default bg-white text-slate-900"
+                    className="mt-1"
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
                 />

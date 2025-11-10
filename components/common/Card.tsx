@@ -5,9 +5,10 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   title?: string;
   interactive?: boolean;
+  bodyClassName?: string;
 }
 
-const Card: React.FC<CardProps> = ({ children, className = '', title, interactive = false, ...props }) => {
+const Card: React.FC<CardProps> = ({ children, className = '', title, interactive = false, bodyClassName = 'p-6', ...props }) => {
   const interactiveClasses = interactive ? 'card-interactive' : '';
   
   return (
@@ -17,7 +18,7 @@ const Card: React.FC<CardProps> = ({ children, className = '', title, interactiv
           <h3 className="text-lg leading-6 font-bold text-slate-900">{title}</h3>
         </div>
       )}
-      <div className="p-6 flex-grow">
+      <div className={`${bodyClassName} flex-grow`}>
         {children}
       </div>
     </div>

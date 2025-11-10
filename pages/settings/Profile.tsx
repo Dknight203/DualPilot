@@ -5,6 +5,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Toast from '../../components/common/Toast';
+import Input from '../../components/common/Input';
 
 const ProfileSettings: React.FC = () => {
     const { user, refreshUser } = useAuth();
@@ -117,22 +118,22 @@ const ProfileSettings: React.FC = () => {
                     </div>
                     <div>
                         <label htmlFor="fullName" className="block text-sm font-medium text-slate-700">Full Name</label>
-                        <input
+                        <Input
                             type="text"
                             id="fullName"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900"
+                            className="mt-1"
                         />
                     </div>
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address</label>
-                        <input
+                        <Input
                             type="email"
                             id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900"
+                            className="mt-1"
                         />
                     </div>
                     <div className="text-right pt-2">
@@ -156,32 +157,32 @@ const ProfileSettings: React.FC = () => {
                     <form onSubmit={handlePasswordUpdate} className="space-y-4 animate-fade-in-up" style={{ animationDuration: '0.3s' }}>
                         <div>
                             <label htmlFor="currentPassword" className="block text-sm font-medium text-slate-700">Current Password</label>
-                            <input
+                            <Input
                                 type="password"
                                 id="currentPassword"
                                 value={currentPassword}
                                 onChange={e => setCurrentPassword(e.target.value)}
-                                className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900"
+                                className="mt-1"
                             />
                         </div>
                         <div>
                             <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700">New Password</label>
-                            <input
+                            <Input
                                 type="password"
                                 id="newPassword"
                                 value={newPassword}
                                 onChange={e => setNewPassword(e.target.value)}
-                                className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900"
+                                className="mt-1"
                             />
                         </div>
                         <div>
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700">Confirm New Password</label>
-                            <input
+                            <Input
                                 type="password"
                                 id="confirmPassword"
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}
-                                className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 bg-white text-slate-900"
+                                className="mt-1"
                             />
                         </div>
                         <div className="flex justify-end gap-3 pt-2">

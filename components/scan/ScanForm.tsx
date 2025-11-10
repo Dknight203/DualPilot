@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
+import Input from '../common/Input';
 
 interface ScanFormProps {
   onScan: (domain: string) => void;
@@ -20,12 +21,11 @@ const ScanForm: React.FC<ScanFormProps> = ({ onScan, isLoading }) => {
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto sm:flex">
       <div className="min-w-0 flex-1">
         <label htmlFor="domain" className="sr-only">Domain</label>
-        <input
+        <Input
           id="domain"
           type="text"
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
-          className="block w-full px-5 py-3 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900"
           placeholder="Enter your domain (e.g., example.com)"
           disabled={isLoading}
         />

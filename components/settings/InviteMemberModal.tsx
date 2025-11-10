@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
 import { TeamMember } from '../../types';
+import Input from '../common/Input';
+import Select from '../common/Select';
 
 interface InviteMemberModalProps {
     onClose: () => void;
@@ -37,27 +39,27 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ onClose, onInvite
                     <div className="p-6 space-y-4">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email Address</label>
-                            <input
+                            <Input
                                 id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900"
+                                className="mt-1"
                                 placeholder="name@company.com"
                                 required
                             />
                         </div>
                         <div>
                             <label htmlFor="role" className="block text-sm font-medium text-slate-700">Role</label>
-                            <select
+                            <Select
                                 id="role"
                                 value={role}
                                 onChange={(e) => setRole(e.target.value as 'Admin' | 'Member')}
-                                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm rounded-md bg-white text-slate-900"
+                                className="mt-1"
                             >
                                 <option value="Member">Member</option>
                                 <option value="Admin">Admin</option>
-                            </select>
+                            </Select>
                         </div>
                     </div>
                     <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">

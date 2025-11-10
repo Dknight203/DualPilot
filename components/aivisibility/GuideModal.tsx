@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Guide } from '../../data/playbookGuides';
 import { Page } from '../../types';
 import Button from '../common/Button';
+import Select from '../common/Select';
 
 interface GuideModalProps {
   guide: Guide;
@@ -55,13 +56,12 @@ const GuideModal: React.FC<GuideModalProps> = ({ guide, onClose, pages, onAutoma
            {guide.actionable && (
             <div className="flex-grow mr-4">
                 <div className="flex items-center gap-2">
-                     <select
+                     <Select
                         value={selectedPageId}
                         onChange={e => setSelectedPageId(e.target.value)}
-                        className="block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-accent-default focus:border-accent-default sm:text-sm rounded-md bg-white text-slate-900"
                       >
                        {pages.map(page => <option key={page.id} value={page.id}>{page.url}</option>)}
-                      </select>
+                      </Select>
                      <Button onClick={handleAutomateClick} variant="primary" disabled={!selectedPageId}>
                         Generate for Page
                     </Button>

@@ -4,6 +4,7 @@ import { verifyDomain, connectCms, disconnectCms } from '../../services/api';
 import Toast from '../common/Toast';
 import PlatformInstructions from './PlatformInstructions';
 import CmsHelpModal from '../settings/CmsHelpModal';
+import Input from '../common/Input';
 
 const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
     const [copied, setCopied] = useState(false);
@@ -103,7 +104,7 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ onNext }) => {
                     <h3 className="font-bold text-lg text-slate-900">1. Install DualPilot Script (Required)</h3>
                     <div className="mt-4">
                         <label htmlFor="domain" className="block text-sm font-medium text-slate-700">Your Domain</label>
-                        <input id="domain" type="text" value={domain} readOnly className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md bg-slate-100 cursor-not-allowed"/>
+                        <Input id="domain" type="text" value={domain} readOnly className="mt-1 bg-slate-200 cursor-not-allowed"/>
                     </div>
                     <div className="mt-4">
                         <p className="block text-sm font-medium text-slate-700">Add script to your site's &lt;head&gt;</p>
@@ -128,15 +129,15 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ onNext }) => {
                     <form onSubmit={handleConnectCms} className="space-y-3">
                         <div>
                             <label className="block text-sm font-medium text-slate-700">WordPress Site URL</label>
-                            <input type="url" value={wpSiteUrl} onChange={(e) => setWpSiteUrl(e.target.value)} placeholder="https://yourblog.com" required className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2"/>
+                            <Input type="url" value={wpSiteUrl} onChange={(e) => setWpSiteUrl(e.target.value)} placeholder="https://yourblog.com" required className="mt-1"/>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700">Application Username</label>
-                            <input type="text" value={wpUsername} onChange={(e) => setWpUsername(e.target.value)} placeholder="dualpilot_user" required className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2"/>
+                            <Input type="text" value={wpUsername} onChange={(e) => setWpUsername(e.target.value)} placeholder="dualpilot_user" required className="mt-1"/>
                         </div>
                         <div>
                             <label className="flex items-center text-sm font-medium text-slate-700">Application Password <button type="button" onClick={() => setIsCmsHelpModalOpen(true)} className="ml-1 text-xs text-accent-default hover:underline">(?)</button></label>
-                            <input type="password" value={wpPassword} onChange={(e) => setWpPassword(e.target.value)} placeholder="xxxx ... xxxx" required className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md px-3 py-2 font-mono"/>
+                            <Input type="password" value={wpPassword} onChange={(e) => setWpPassword(e.target.value)} placeholder="xxxx ... xxxx" required className="mt-1 font-mono"/>
                         </div>
                         <div className="text-center pt-2">
                             <Button type="submit" isLoading={isConnectingCms} variant="outline">Connect WordPress</Button>

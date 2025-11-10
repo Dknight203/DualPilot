@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
+import Textarea from '../common/Textarea';
 
 interface StepConfirmProfileProps {
     onProfileConfirmed: () => void;
@@ -46,12 +47,12 @@ const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ onProfileConfir
                  ) : (
                     <div>
                         <label htmlFor="summary" className="block text-sm font-medium text-slate-700">Your Site's AI Profile</label>
-                        <textarea
+                        <Textarea
                             id="summary"
                             rows={5}
                             value={summary}
                             onChange={(e) => setSummary(e.target.value)}
-                            className="mt-1 block w-full px-4 py-2 border border-slate-300 rounded-md shadow-sm focus:ring-accent-default focus:border-accent-default sm:text-sm bg-white text-slate-900"
+                            className="mt-1"
                             required
                         />
                     </div>
