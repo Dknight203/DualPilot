@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { saveKeywords } from '../../services/api';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Textarea from '../common/Textarea';
@@ -6,15 +7,27 @@ import Textarea from '../common/Textarea';
 interface KeywordEditorProps {
     userKeywords: string[];
     aiKeywords: string[];
+    pageId: string;
+    setToast: (toast: { message: string; type: 'success' | 'error' | 'info' }) => void;
 }
 
-const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords }) => {
+const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords, pageId, setToast }) => {
     const [keywords, setKeywords] = useState(userKeywords.join(', '));
     const [includeAI, setIncludeAI] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSave = () => {
-        // TODO: API call to save keywords
-        console.log("Saving keywords:", { keywords, includeAI });
+    const handleSave = async () => {
+        setIsSaving(true);
+        setToast({ message: "Saving keywords...", type: 'info' });
+        try {
+            const keywordArray = keywords.split(',').map(kw => kw.trim()).filter(Boolean);
+            await saveKeywords(pageId, keywordArray, includeAI);
+            setToast({ message: "Keywords saved successfully!", type: 'success' });
+        } catch (error) {
+            setToast({ message: "Failed to save keywords. Please try again.", type: 'error' });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -29,6 +42,7 @@ const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords 
                     className="mt-1"
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
+                    disabled={isSaving}
                 />
             </div>
             <div className="mt-4">
@@ -40,6 +54,7 @@ const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords 
                             className="focus:ring-accent-default h-4 w-4 text-accent-default border-slate-300 rounded"
                             checked={includeAI}
                             onChange={(e) => setIncludeAI(e.target.checked)}
+                            disabled={isSaving}
                         />
                     </div>
                     <div className="ml-3 text-sm">
@@ -55,7 +70,9 @@ const KeywordEditor: React.FC<KeywordEditorProps> = ({ userKeywords, aiKeywords 
                 </div>
             </div>
             <div className="mt-4 text-right">
-                <Button onClick={handleSave} variant="primary">Save Keywords</Button>
+                <Button onClick={handleSave} variant="primary" isLoading={isSaving} disabled={isSaving}>
+                    Save Keywords
+                </Button>
             </div>
         </Card>
     );

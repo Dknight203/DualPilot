@@ -180,6 +180,12 @@ export const getPageDetails = (pageId: string): Promise<PageDetails> => {
     return simulateApiCall(details, 800);
 };
 
+export const saveKeywords = (pageId: string, keywords: string[], includeAiKeywords: boolean): Promise<{ success: boolean }> => {
+    console.log(`Saving keywords for page ${pageId}:`, { keywords, includeAiKeywords });
+    // In a real app, you'd save this to the database.
+    return simulateApiCall({ success: true }, 1000);
+};
+
 export const optimizePage = (pageId: string): Promise<PageOutput> => {
     const newOutput: PageOutput = {
         id: `out_${Math.random()}`,

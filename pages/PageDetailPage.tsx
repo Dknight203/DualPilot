@@ -98,7 +98,12 @@ const PageDetailPage: React.FC = () => {
                                 Generate New Optimization
                             </Button>
                         </Card>
-                        <KeywordEditor userKeywords={page.userKeywords} aiKeywords={page.aiKeywords} />
+                        <KeywordEditor 
+                            userKeywords={page.userKeywords} 
+                            aiKeywords={page.aiKeywords} 
+                            pageId={page.id} 
+                            setToast={setToast} 
+                        />
                         <Card title="Optimization History">
                            <ul className="mt-4 space-y-2">
                                {page.history.map((h, index) => (
