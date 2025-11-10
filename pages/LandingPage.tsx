@@ -8,7 +8,7 @@ import PlanCards from '../components/pricing/PlanCards';
 
 // Hero Section Component
 const ScoreCard = () => (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow md:p-8">
         <h3 className="text-lg font-bold text-slate-900">Visibility Score</h3>
         <p className="text-sm text-slate-600 mt-1">Example Score</p>
         <div className="mt-4 flex justify-center">

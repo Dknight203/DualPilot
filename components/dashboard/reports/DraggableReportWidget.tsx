@@ -40,7 +40,7 @@ const DraggableReportWidget: React.FC<DraggableReportWidgetProps> = ({ widget, m
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`bg-white shadow-sm rounded-xl border border-slate-200 flex flex-col ${className}`}
+      className={`bg-white shadow rounded-xl border border-slate-200 flex flex-col ${className}`}
     >
       <ReportWidgetHeader
         title={widget.title}
