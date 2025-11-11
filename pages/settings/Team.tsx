@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getTeamMembers, inviteTeamMember, updateTeamMemberRole } from '../../services/api';
+import { getTeamMembers, inviteTeamMember, updateTeamMemberRole, removeTeamMember } from '../../services/api';
 import { TeamMember } from '../../types';
 import { useAuth } from '../../components/auth/AuthContext';
 import Card from '../../components/common/Card';
@@ -7,6 +7,7 @@ import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import Toast from '../../components/common/Toast';
 import InviteMemberModal from '../../components/settings/InviteMemberModal';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 const TeamSettings: React.FC = () => {
     const { user: currentUser } = useAuth();
@@ -15,6 +16,8 @@ const TeamSettings: React.FC = () => {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+    const [isRemovingId, setIsRemovingId] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -66,6 +69,22 @@ const TeamSettings: React.FC = () => {
         }
     };
     
+    const handleConfirmRemove = async () => {
+        if (!memberToRemove) return;
+        
+        setIsRemovingId(memberToRemove.id);
+        try {
+            await removeTeamMember(memberToRemove.id);
+            setTeamMembers(prev => prev.filter(m => m.id !== memberToRemove.id));
+            setToast({ message: `${memberToRemove.name} has been removed.`, type: 'success' });
+            setMemberToRemove(null);
+        } catch (error) {
+            setToast({ message: 'Failed to remove member.', type: 'error' });
+        } finally {
+            setIsRemovingId(null);
+        }
+    };
+    
     if (isLoading || !currentUser) {
         return <Card title="Team Members"><div className="flex justify-center py-8"><LoadingSpinner /></div></Card>
     }
@@ -76,6 +95,19 @@ const TeamSettings: React.FC = () => {
         <>
             {isInviteModalOpen && <InviteMemberModal onClose={() => setIsInviteModalOpen(false)} onInvite={handleInviteMember} />}
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            {memberToRemove && (
+                <ConfirmModal
+                    isOpen={!!memberToRemove}
+                    onClose={() => setMemberToRemove(null)}
+                    onConfirm={handleConfirmRemove}
+                    title="Remove Team Member"
+                    isConfirming={!!isRemovingId}
+                    confirmText="Remove"
+                    confirmVariant="danger"
+                >
+                    Are you sure you want to remove {memberToRemove.name}? This action cannot be undone.
+                </ConfirmModal>
+            )}
             <Card title="Team Members">
                 <ul className="divide-y divide-slate-200">
                     <li key={currentUser.id} className="py-3 flex justify-between items-center">
@@ -115,7 +147,14 @@ const TeamSettings: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <Button variant="outline" disabled={!isAdmin || member.isOwner}>Remove</Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setMemberToRemove(member)}
+                                    isLoading={isRemovingId === member.id}
+                                    disabled={!isAdmin || member.isOwner}
+                                >
+                                    Remove
+                                </Button>
                             </div>
                         </li>
                     ))}

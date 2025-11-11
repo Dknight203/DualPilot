@@ -43,7 +43,7 @@ const mockApiKeys: ApiKey[] = [
     { id: 'key_2', name: 'Reporting Script', lastFour: 'c3d4', createdAt: '2023-09-01T14:30:00Z', status: 'active' },
 ];
 
-const mockTeamMembers: TeamMember[] = [
+let mockTeamMembers: TeamMember[] = [
     { id: 'user_1', name: 'Alex Smith (You)', email: 'test@example.com', role: 'Admin', status: 'Active', isOwner: true, avatarUrl: `https://i.pravatar.cc/150?u=test@example.com` },
     { id: 'user_2', name: 'Jane Doe', email: 'jane@example.com', role: 'Member', status: 'Active', avatarUrl: `https://i.pravatar.cc/150?u=jane@example.com` },
     { id: 'user_3', name: 'Mike Johnson', email: 'mike@example.com', role: 'Admin', status: 'Active', avatarUrl: `https://i.pravatar.cc/150?u=mike@example.com` },
@@ -313,6 +313,15 @@ export const updateTeamMemberRole = (memberId: string, role: 'Admin' | 'Member')
     if (member) {
         member.role = role;
         return simulateApiCall(member, 300);
+    }
+    return Promise.reject('Member not found');
+};
+
+export const removeTeamMember = (memberId: string): Promise<{ success: boolean }> => {
+    const memberIndex = mockTeamMembers.findIndex(m => m.id === memberId);
+    if (memberIndex > -1) {
+        mockTeamMembers.splice(memberIndex, 1);
+        return simulateApiCall({ success: true }, 800);
     }
     return Promise.reject('Member not found');
 };
