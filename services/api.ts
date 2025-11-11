@@ -264,6 +264,33 @@ export const getCurrentUser = (email: string): Promise<TeamMember | undefined> =
     return simulateApiCall(user);
 };
 
+export const saveSiteSettings = (siteId: string, newSiteName: string, newDomain: string): Promise<Site> => {
+    let foundSite: Site | undefined;
+    let siteUpdated = false;
+
+    for (const userEmail in userSites) {
+        const sitesForUser = userSites[userEmail];
+        const siteIndex = sitesForUser.findIndex(s => s.id === siteId);
+
+        if (siteIndex > -1) {
+            sitesForUser[siteIndex] = {
+                ...sitesForUser[siteIndex],
+                siteName: newSiteName,
+                domain: newDomain,
+            };
+            foundSite = sitesForUser[siteIndex];
+            siteUpdated = true;
+            break;
+        }
+    }
+
+    if (siteUpdated && foundSite) {
+        return simulateApiCall(foundSite, 800);
+    } else {
+        return Promise.reject('Site not found');
+    }
+};
+
 export const updateUserProfile = (userId: string, data: Partial<Pick<TeamMember, 'name' | 'email' | 'avatarUrl'>>): Promise<TeamMember> => {
     const memberIndex = mockTeamMembers.findIndex(m => m.id === userId);
     if (memberIndex > -1) {
