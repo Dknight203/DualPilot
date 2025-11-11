@@ -8,9 +8,9 @@ import StepIntegrations from '../components/onboarding/StepIntegrations';
 import StepScan from '../components/onboarding/StepScan';
 
 const OnboardingPage: React.FC = () => {
+    const steps = ['Your Site', 'Your Profile', 'Choose Plan', 'Connect GSC', 'Integrations', 'First Scan'];
     const [currentStep, setCurrentStep] = useState(1);
     const [domain, setDomain] = useState<string | null>(null);
-    const steps = ['Your Site', 'Your Profile', 'Choose Plan', 'Connect GSC', 'Integrations', 'First Scan'];
 
     const handleNextStep = () => {
         if (currentStep < steps.length) {

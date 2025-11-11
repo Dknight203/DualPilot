@@ -500,6 +500,24 @@ export const resetPassword = (token: string, newPassword: string): Promise<{ suc
     return simulateApiCall({ success: true }, 1000);
 };
 
+export const disconnectSite = (siteId: string): Promise<{ success: boolean }> => {
+    let siteRemoved = false;
+    for (const userEmail in userSites) {
+        const initialLength = userSites[userEmail].length;
+        userSites[userEmail] = userSites[userEmail].filter(s => s.id !== siteId);
+        if (userSites[userEmail].length < initialLength) {
+            siteRemoved = true;
+            break;
+        }
+    }
+
+    if (siteRemoved) {
+        return simulateApiCall({ success: true }, 1000);
+    } else {
+        return Promise.reject('Site not found to disconnect');
+    }
+};
+
 
 // FIX: Correctly initialize GoogleGenAI as per guidelines.
 const ai = new GoogleGenAI({apiKey: process.env.API_KEY || ''});

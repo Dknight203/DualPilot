@@ -48,7 +48,7 @@ const StepScan: React.FC = () => {
     }, []);
 
     const handleGoToDashboard = () => {
-        // This flag will trigger the welcome modal on the dashboard
+        // This flag will trigger the welcome modal on the dashboard for new users
         localStorage.setItem('isFirstLogin', 'true');
         navigate('/dashboard');
     };

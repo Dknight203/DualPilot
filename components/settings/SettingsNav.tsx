@@ -8,7 +8,7 @@ const navItems = [
     { path: 'site', label: 'Site', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'billing', label: 'Plan & Billing', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'branding', label: 'Branding', requiredRole: ['Admin', 'Member'], requiredPlan: ['agency'], isPremium: true },
-    { path: 'cms', label: 'CMS Connections', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
+    { path: 'integrations', label: 'Integrations', requiredRole: ['Admin', 'Member'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'team', label: 'Team Members', requiredRole: ['Admin'], requiredPlan: ['essentials', 'pro', 'agency'] },
     { path: 'api', label: 'API Access', requiredRole: ['Admin', 'Member'], requiredPlan: ['agency'], isPremium: true },
     { path: 'danger', label: 'Danger Zone', requiredRole: ['Admin'], requiredPlan: ['essentials', 'pro', 'agency'] },
@@ -33,30 +33,32 @@ const SettingsNav: React.FC = () => {
     }
 
     return (
-        <nav className="space-y-1" aria-label="Settings navigation">
-            {navItems.map(item => {
-                const hasRequiredRole = item.requiredRole.includes(user.role);
-                const hasRequiredPlan = item.requiredPlan.includes(activeSite.plan);
-                
-                if (!hasRequiredRole) {
-                    return null;
-                }
-                
-                const showLock = item.isPremium && !hasRequiredPlan;
+        <nav className="flex flex-col h-full" aria-label="Settings navigation">
+            <div className="space-y-1 flex-grow">
+                {navItems.map(item => {
+                    const hasRequiredRole = item.requiredRole.includes(user.role);
+                    const hasRequiredPlan = item.requiredPlan.includes(activeSite.plan);
+                    
+                    if (!hasRequiredRole) {
+                        return null;
+                    }
+                    
+                    const showLock = item.isPremium && !hasRequiredPlan;
 
-                return (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses
-                        }
-                    >
-                        {item.label}
-                        {showLock && <LockIcon />}
-                    </NavLink>
-                );
-            })}
+                    return (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) =>
+                                isActive ? `${navLinkClasses} ${activeNavLinkClasses}` : navLinkClasses
+                            }
+                        >
+                            {item.label}
+                            {showLock && <LockIcon />}
+                        </NavLink>
+                    );
+                })}
+            </div>
         </nav>
     );
 };

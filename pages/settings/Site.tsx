@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSite } from '../../components/site/SiteContext';
+import { useAuth } from '../../components/auth/AuthContext';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -8,6 +10,8 @@ import { saveSiteSettings } from '../../services/api';
 
 const SiteSettings: React.FC = () => {
     const { activeSite, setActiveSite } = useSite();
+    const { user } = useAuth();
+    const navigate = useNavigate();
     
     const [siteName, setSiteName] = useState(activeSite?.siteName || '');
     const [domain, setDomain] = useState(activeSite?.domain || '');
@@ -36,6 +40,21 @@ const SiteSettings: React.FC = () => {
             setIsSaving(false);
         }
     };
+    
+    const cardTitle = (
+        <div className="flex justify-between items-center">
+            <span>Site Settings</span>
+            {user?.role === 'Admin' && (
+                 <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate('/add-site')}
+                >
+                    + Add New Site
+                </Button>
+            )}
+        </div>
+    );
 
 
     if (!activeSite) {
@@ -49,7 +68,7 @@ const SiteSettings: React.FC = () => {
     return (
         <>
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-            <Card title="Site Settings">
+            <Card title={cardTitle}>
                 <form onSubmit={handleSave} className="space-y-4">
                     <div>
                         <label htmlFor="siteName" className="block text-sm font-medium text-slate-700">Site Name</label>
