@@ -16,7 +16,7 @@ import OptimizationActivityTable from '../components/dashboard/reports/Optimizat
 import GeoInsightsPlaceholder from '../components/dashboard/reports/GeoInsightsPlaceholder';
 import ComparisonStatCards from '../components/dashboard/reports/ComparisonStatCards';
 import GscPerformanceTable from '../components/dashboard/reports/GscPerformanceTable';
-import { generatePdfReport } from '../services/pdfGenerator';
+import { exportWidgetAsPng, exportFullReportAsPdf } from '../services/pdfGenerator';
 
 
 export interface ReportWidgetConfig {
@@ -33,6 +33,7 @@ const ReportsPage: React.FC = () => {
     const { activeSite } = useSite();
     const [reportData, setReportData] = useState<ReportData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false);
     const [isGscConnected, setIsGscConnected] = useState(false);
     const [isGscModalOpen, setIsGscModalOpen] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -95,13 +96,41 @@ const ReportsPage: React.FC = () => {
     
     const handleExportWidget = async (widgetId: string) => {
         const widgetEl = widgetRefs.current[widgetId];
-        if (!widgetEl || !activeSite) {
+        const widgetConfig = widgets.find(w => w.id === widgetId);
+        if (!widgetEl || !activeSite || !widgetConfig) {
             setToast({ message: 'Could not export widget.', type: 'error' });
             return;
         }
-        setToast({ message: `Exporting ${widgetId}...`, type: 'info' });
-        await generatePdfReport(widgetEl, `${activeSite.siteName} - ${widgetId}`, activeSite.plan, brandingSettings);
+        setToast({ message: `Exporting ${widgetConfig.title}...`, type: 'info' });
+        await exportWidgetAsPng(widgetEl, `${activeSite.siteName} - ${widgetConfig.title}`, activeSite.plan, brandingSettings);
     };
+    
+    const handleExport = async () => {
+        if (!activeSite) return;
+        
+        setIsExporting(true);
+        setToast({ message: 'Generating your report... this may take a moment.', type: 'info' });
+
+        try {
+            const widgetsToExport = widgets
+                .filter(w => w.id !== 'geo') // Exclude "Coming Soon" widget
+                .map(w => ({ id: w.id, element: widgetRefs.current[w.id] }))
+                .filter(w => w.element);
+
+            await exportFullReportAsPdf(
+                widgetsToExport,
+                activeSite.siteName,
+                activeSite.plan,
+                brandingSettings
+            );
+        } catch (error) {
+            console.error("Error exporting full report:", error);
+            setToast({ message: 'An error occurred while generating the report.', type: 'error' });
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
 
     const handleGscConnectSuccess = () => {
         setIsGscModalOpen(false);
@@ -165,8 +194,8 @@ const ReportsPage: React.FC = () => {
                             setDateRange={setDateRange}
                             compare={compare}
                             setCompare={setCompare}
-                            onExport={() => alert("Full page export disabled in dashboard view. Please export individual widgets.")}
-                            isExporting={false}
+                            onExport={handleExport}
+                            isExporting={isExporting}
                         />
                     </div>
                     
@@ -199,7 +228,10 @@ const ReportsPage: React.FC = () => {
                                     setChartType={(type) => setWidgetChartType(widget.id, type)}
                                     className={widget.className}
                                 >
-                                    <div ref={el => widgetRefs.current[widget.id] = el} className="bg-white p-6 rounded-b-xl">
+                                    <div ref={el => {
+                                        // The parent is the element we want to capture, including header
+                                        if (el) widgetRefs.current[widget.id] = el.parentElement as HTMLDivElement;
+                                    }} className="bg-white p-6 rounded-b-xl">
                                        <widget.component {...componentProps} />
                                     </div>
                                 </DraggableReportWidget>

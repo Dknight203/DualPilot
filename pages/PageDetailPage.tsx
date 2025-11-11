@@ -1,7 +1,7 @@
 // FIX: Created component content to resolve module not found error.
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getPageDetails, optimizePage } from '../services/api';
+import { getPageDetails, optimizePage, approveOptimization } from '../services/api';
 import { PageDetails, PageOutput } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
@@ -21,6 +21,7 @@ const PageDetailPage: React.FC = () => {
     const [newOutput, setNewOutput] = useState<PageOutput | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isOptimizing, setIsOptimizing] = useState(false);
+    const [isApproving, setIsApproving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
     const [historyModal, setHistoryModal] = useState<{ old: PageOutput; new: PageOutput } | null>(null);
@@ -61,18 +62,27 @@ const PageDetailPage: React.FC = () => {
         }
     };
     
-    const handleApprove = () => {
-        console.log("Approving output:", newOutput?.id);
-        setToast({ message: "Changes approved and will be published.", type: 'info' });
-        setNewOutput(null);
-        fetchDetails(); // Refetch to show the latest as "current"
-    }
+    const handleApprove = async () => {
+        if (!pageId || !newOutput) return;
+        
+        setIsApproving(true);
+        try {
+            await approveOptimization(pageId, newOutput);
+            setToast({ message: "Changes approved and will be published.", type: 'success' });
+            setNewOutput(null);
+            await fetchDetails(); // Refetch to show the latest as "current"
+        } catch (error) {
+            setToast({ message: "Failed to approve changes.", type: 'error' });
+        } finally {
+            setIsApproving(false);
+        }
+    };
 
     if (isLoading) return <div className="flex justify-center items-center h-[calc(100vh-10rem)]"><LoadingSpinner text="Loading Page Details..." /></div>;
     if (error) return <div className="p-8"><ErrorState title="Load Failed" message={error} onRetry={fetchDetails} /></div>;
     if (!page) return <div className="text-center py-20">Page not found.</div>;
 
-    const currentOutput = page.history[page.history.length-1] || { metaTitle: page.metaTitle, metaDescription: page.metaDescription, jsonLd: page.jsonLd };
+    const currentOutput = page.history.length > 0 ? page.history[page.history.length - 1] : { metaTitle: page.metaTitle, metaDescription: page.metaDescription, jsonLd: page.jsonLd };
 
     return (
         <div className="bg-white p-4 sm:p-6 lg:p-8">
@@ -126,8 +136,8 @@ const PageDetailPage: React.FC = () => {
                              <Card title="Review & Approve Changes">
                                 <OptimizeDiffViewer oldOutput={currentOutput} newOutput={newOutput} pageUrl={page.url} />
                                 <div className="mt-6 flex justify-end space-x-3">
-                                    <Button onClick={() => setNewOutput(null)} variant="outline">Discard</Button>
-                                    <Button onClick={handleApprove} variant="primary">Approve & Publish</Button>
+                                    <Button onClick={() => setNewOutput(null)} variant="outline" disabled={isApproving}>Discard</Button>
+                                    <Button onClick={handleApprove} variant="primary" isLoading={isApproving}>Approve & Publish</Button>
                                 </div>
                             </Card>
                         ) : (

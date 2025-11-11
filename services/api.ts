@@ -52,6 +52,21 @@ const mockTeamMembers: TeamMember[] = [
 
 let mockCmsConnection: CmsConnection | null = null;
 
+// Stateful store for page details to make approve actions feel real
+const mockPageDetailsStore: { [key: string]: PageDetails } = {};
+
+const generateMockPageDetails = (page: Page): PageDetails => ({
+    ...page,
+    metaTitle: 'Original Meta Title for ' + page.url,
+    metaDescription: 'Original meta description for this page. It is not yet optimized by AI.',
+    jsonLd: { "@context": "https://schema.org", "@type": "WebPage", "name": 'Original Meta Title for ' + page.url },
+    userKeywords: ['keyword1', 'keyword2'],
+    aiKeywords: ['ai-keyword1', 'ai-keyword2', 'ai-keyword3'],
+    history: [
+        { id: `out_initial_${page.id}`, metaTitle: 'Original Meta Title for ' + page.url, metaDescription: 'Original meta description for this page.', jsonLd: {}, modelVersion: 'N/A', createdAt: '2023-01-01T10:00:00Z' }
+    ],
+});
+
 
 // --- API SIMULATION ---
 const simulateApiCall = <T>(data: T, delay = 500): Promise<T> => {
@@ -164,31 +179,37 @@ export const bulkApprovePages = (pageIds: string[]): Promise<{ success: boolean 
 };
 
 export const getPageDetails = (pageId: string): Promise<PageDetails> => {
-    const basePage = mockPages.find(p => p.id === pageId) || mockPages[0];
-    const details: PageDetails = {
-        ...basePage,
-        metaTitle: '7 Advanced AI SEO Strategies to Dominate in 2024',
-        metaDescription: 'Unlock the future of search with these 7 advanced AI SEO strategies. Learn how to leverage machine learning for top rankings.',
-        jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", "headline": "AI SEO" },
-        userKeywords: ['ai seo', 'machine learning', 'search engine optimization'],
-        aiKeywords: ['generative ai', 'llm for seo', 'content automation', 'semantic search'],
-        history: [
-            { id: 'out_1', metaTitle: 'AI SEO Tips', metaDescription: 'Some tips for AI SEO.', jsonLd: {}, modelVersion: 'gemini-1.0', createdAt: '2023-10-20T10:00:00Z' },
-            { id: 'out_2', metaTitle: '7 Advanced AI SEO Strategies to Dominate in 2024', metaDescription: 'Unlock the future of search with these 7 advanced AI SEO strategies. Learn how to leverage machine learning for top rankings.', jsonLd: { "@context": "https://schema.org", "@type": "BlogPosting", "headline": "AI SEO" }, modelVersion: 'gemini-1.5', createdAt: '2023-10-26T14:30:00Z' },
-        ],
-    };
+    // If we have a stateful version in our store, use it
+    if (mockPageDetailsStore[pageId]) {
+        return simulateApiCall(mockPageDetailsStore[pageId], 800);
+    }
+
+    // Otherwise, generate and store it for the first time
+    const basePage = mockPages.find(p => p.id === pageId);
+    if (!basePage) {
+        // Create a fallback for IDs not in the main list for robustness
+        const fallbackPage: Page = { id: pageId, url: `/unknown/page/${pageId}`, lastOptimized: null, score: 50, status: PageStatus.NeedsReview };
+        const fallbackDetails = generateMockPageDetails(fallbackPage);
+        mockPageDetailsStore[pageId] = fallbackDetails;
+        return simulateApiCall(fallbackDetails, 800);
+    }
+    
+    const details = generateMockPageDetails(basePage);
+    mockPageDetailsStore[pageId] = details;
     return simulateApiCall(details, 800);
 };
 
 export const saveKeywords = (pageId: string, keywords: string[], includeAiKeywords: boolean): Promise<{ success: boolean }> => {
     console.log(`Saving keywords for page ${pageId}:`, { keywords, includeAiKeywords });
-    // In a real app, you'd save this to the database.
+    if (mockPageDetailsStore[pageId]) {
+        mockPageDetailsStore[pageId].userKeywords = keywords;
+    }
     return simulateApiCall({ success: true }, 1000);
 };
 
 export const optimizePage = (pageId: string): Promise<PageOutput> => {
     const newOutput: PageOutput = {
-        id: `out_${Math.random()}`,
+        id: `out_${Math.random().toString(36).substr(2, 9)}`,
         metaTitle: `The Ultimate Guide to AI-Powered SEO | ${new Date().getFullYear()}`,
         metaDescription: `Discover the absolute best practices for AI-driven SEO. This comprehensive guide covers everything from keyword clustering to schema generation.`,
         jsonLd: { "@context": "https://schema.org", "@type": "Article", "headline": "The Ultimate Guide to AI-Powered SEO" },
@@ -197,6 +218,32 @@ export const optimizePage = (pageId: string): Promise<PageOutput> => {
     };
     return simulateApiCall(newOutput, 2500);
 };
+
+export const approveOptimization = (pageId: string, newOutput: PageOutput): Promise<{ success: boolean }> => {
+    if (!mockPageDetailsStore[pageId]) {
+        return Promise.reject('Page details not found in cache. Please refresh.');
+    }
+
+    const pageDetails = mockPageDetailsStore[pageId];
+    pageDetails.history.push(newOutput);
+    pageDetails.metaTitle = newOutput.metaTitle;
+    pageDetails.metaDescription = newOutput.metaDescription;
+    pageDetails.jsonLd = newOutput.jsonLd;
+    pageDetails.lastOptimized = new Date().toISOString();
+    pageDetails.score = Math.min(100, pageDetails.score + Math.floor(Math.random() * 5 + 3));
+    pageDetails.status = PageStatus.Optimized;
+    
+    // Also update the main mockPages list so the dashboard table reflects the change
+    const pageIndex = mockPages.findIndex(p => p.id === pageId);
+    if (pageIndex > -1) {
+        mockPages[pageIndex].status = PageStatus.Optimized;
+        mockPages[pageIndex].score = pageDetails.score;
+        mockPages[pageIndex].lastOptimized = pageDetails.lastOptimized;
+    }
+    
+    return simulateApiCall({ success: true }, 1200);
+};
+
 
 export const getBillingInfo = (): Promise<{ invoices: Invoice[] }> => {
     const invoices: Invoice[] = [

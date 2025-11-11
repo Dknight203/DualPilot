@@ -23,8 +23,8 @@ const GscPerformanceTable: React.FC<GscPerformanceTableProps> = ({ data }) => {
     const { current: currentData, previous: previousData } = data;
     
     return (
-        <div className="overflow-auto max-h-[32rem]">
-            <table className="min-w-full divide-y divide-slate-200">
+        <div className="overflow-auto max-h-[32rem]" data-export-scroll-container>
+            <table className="min-w-full divide-y divide-slate-200 performance-table">
                 <thead className="bg-slate-50 sticky top-0">
                     <tr>
                         <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
