@@ -18,30 +18,30 @@ const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
 };
 
 interface OtherFormProps {
-    onBack: () => void;
     onVerify: () => void;
     isVerifying: boolean;
     isVerified: boolean;
+    onBack?: () => void;
 }
 
-const OtherForm: React.FC<OtherFormProps> = ({ onBack, onVerify, isVerifying, isVerified }) => {
+const OtherForm: React.FC<OtherFormProps> = ({ onVerify, isVerifying, isVerified, onBack }) => {
     const [showInstructions, setShowInstructions] = useState(false);
     const SCRIPT_TAG = `<script defer src="/dual.js"></script>`;
 
     return (
         <div>
-            <button onClick={onBack} className="text-sm text-slate-500 hover:underline mb-4">&larr; Back to platform selection</button>
-            <h3 className="font-bold text-lg text-slate-900">Universal Integration</h3>
-            <p className="text-sm text-slate-600 mt-1">Use our universal script to connect any site, including Squarespace, or custom-built platforms.</p>
+            <h3 className="font-bold text-lg text-slate-900 text-center">Universal Integration</h3>
+            <p className="text-sm text-slate-600 mt-1 text-center">Use our universal script to connect any site, including Squarespace, or custom-built platforms.</p>
 
-            <div className="mt-6">
+            <div className="mt-6 max-w-2xl mx-auto">
                 <p className="block text-sm font-medium text-slate-700">Add this script to your site's &lt;head&gt; tag</p>
                 <div className="mt-1"><CodeBlock code={SCRIPT_TAG} /></div>
                 <button onClick={() => setShowInstructions(!showInstructions)} className="mt-2 text-xs font-medium text-accent-default hover:underline">{showInstructions ? 'Hide' : 'Show'} detailed installation guides</button>
             </div>
-            {showInstructions && <div className="mt-2 animate-fade-in-up" style={{ animationDuration: '0.3s' }}><PlatformInstructions /></div>}
+            {showInstructions && <div className="mt-2 animate-fade-in-up max-w-2xl mx-auto" style={{ animationDuration: '0.3s' }}><PlatformInstructions /></div>}
             
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center flex justify-center gap-4">
+                {onBack && <Button type="button" variant="outline" onClick={onBack}>Back</Button>}
                 <Button onClick={onVerify} isLoading={isVerifying} disabled={isVerified}>
                     {isVerified ? 'Verified!' : 'Verify Script Installation'}
                 </Button>

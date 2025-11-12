@@ -6,9 +6,10 @@ import Textarea from '../common/Textarea';
 interface StepConfirmProfileProps {
     domain: string;
     onProfileConfirmed: () => void;
+    onBack: () => void;
 }
 
-const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ domain, onProfileConfirmed }) => {
+const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ domain, onProfileConfirmed, onBack }) => {
     const [summary, setSummary] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
@@ -52,7 +53,10 @@ const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ domain, onProfi
                         />
                     </div>
                  )}
-                <div className="text-center pt-4">
+                <div className="text-center pt-4 flex justify-center gap-4">
+                    <Button type="button" variant="outline" size="lg" onClick={onBack}>
+                        Back
+                    </Button>
                     <Button type="submit" size="lg" disabled={isLoading}>
                         Confirm Profile & Continue
                     </Button>

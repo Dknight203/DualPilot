@@ -5,9 +5,10 @@ import Button from '../common/Button';
 
 interface StepPlanProps {
     onPlanSelected: () => void;
+    onBack: () => void;
 }
 
-const StepPlan: React.FC<StepPlanProps> = ({ onPlanSelected }) => {
+const StepPlan: React.FC<StepPlanProps> = ({ onPlanSelected, onBack }) => {
     // In a real app, this would integrate with state management to store the chosen plan
     const handleSelectPlan = (planId: string) => {
         console.log(`Plan ${planId} selected.`);
@@ -20,6 +21,11 @@ const StepPlan: React.FC<StepPlanProps> = ({ onPlanSelected }) => {
             <p className="mt-2 text-center text-slate-600">You can upgrade, downgrade, or cancel at any time.</p>
             <div className="mt-8">
                 <PlanCards plans={PRICING_PLANS} onSelectPlan={handleSelectPlan} />
+            </div>
+             <div className="mt-8 text-center">
+                <Button onClick={onBack} variant="outline" size="lg">
+                    Back
+                </Button>
             </div>
         </div>
     );

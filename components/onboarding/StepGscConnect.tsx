@@ -4,6 +4,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 
 interface StepGscConnectProps {
     onNext: () => void;
+    onBack: () => void;
 }
 
 const GoogleIcon: React.FC = () => (
@@ -22,7 +23,7 @@ const InfoItem: React.FC<{ title: string; children: React.ReactNode }> = ({ titl
     </div>
 );
 
-const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext }) => {
+const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext, onBack }) => {
     const [status, setStatus] = useState<'idle' | 'connecting' | 'connected'>('idle');
 
     const handleConnect = () => {
@@ -57,7 +58,10 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext }) => {
                 </InfoItem>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 flex items-center gap-4">
+                 <Button onClick={onBack} variant="outline" size="lg">
+                    Back
+                </Button>
                 {status === 'idle' && (
                     <Button size="lg" onClick={handleConnect}>
                         <GoogleIcon />

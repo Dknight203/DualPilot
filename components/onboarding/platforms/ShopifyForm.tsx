@@ -3,11 +3,11 @@ import Button from '../../common/Button';
 import Input from '../../common/Input';
 
 interface ShopifyFormProps {
-    onBack: () => void;
     onConnected: () => void;
+    onBack?: () => void;
 }
 
-const ShopifyForm: React.FC<ShopifyFormProps> = ({ onBack, onConnected }) => {
+const ShopifyForm: React.FC<ShopifyFormProps> = ({ onConnected, onBack }) => {
     const [isConnecting, setIsConnecting] = useState(false);
     const [storeUrl, setStoreUrl] = useState('');
     const [apiToken, setApiToken] = useState('');
@@ -25,11 +25,10 @@ const ShopifyForm: React.FC<ShopifyFormProps> = ({ onBack, onConnected }) => {
     
     return (
         <div>
-            <button onClick={onBack} className="text-sm text-slate-500 hover:underline mb-4">&larr; Back to platform selection</button>
-            <h3 className="font-bold text-lg text-slate-900">Connect Your Shopify Store</h3>
-            <p className="text-sm text-slate-600 mt-1">Enable one-click publishing for your product and collection pages.</p>
+            <h3 className="font-bold text-lg text-slate-900 text-center">Connect Your Shopify Store</h3>
+            <p className="text-sm text-slate-600 mt-1 text-center">Enable one-click publishing for your product and collection pages.</p>
 
-            <form onSubmit={handleConnect} className="mt-6 space-y-4">
+            <form onSubmit={handleConnect} className="mt-6 space-y-4 max-w-md mx-auto">
                 <div>
                     <label className="block text-sm font-medium text-slate-700">Shopify Store URL</label>
                     <Input type="text" value={storeUrl} onChange={(e) => setStoreUrl(e.target.value)} placeholder="your-store.myshopify.com" required className="mt-1"/>
@@ -41,7 +40,8 @@ const ShopifyForm: React.FC<ShopifyFormProps> = ({ onBack, onConnected }) => {
                     </label>
                     <Input type="password" value={apiToken} onChange={(e) => setApiToken(e.target.value)} placeholder="shpat_..." required className="mt-1 font-mono"/>
                 </div>
-                <div className="text-center pt-2">
+                <div className="text-center pt-2 flex justify-center gap-4">
+                    {onBack && <Button type="button" variant="outline" onClick={onBack}>Back</Button>}
                     <Button type="submit" isLoading={isConnecting}>Connect Shopify</Button>
                 </div>
             </form>

@@ -3,7 +3,7 @@ import { useSite } from '../components/site/SiteContext';
 import { PlanId } from '../types';
 import Stepper from '../components/onboarding/Stepper';
 import StepEnterDomain from '../components/onboarding/StepEnterDomain';
-import StepIntegrations from '../components/onboarding/StepIntegrations';
+import StepIntegrations, { Platform } from '../components/onboarding/StepIntegrations';
 import StepScan from '../components/onboarding/StepScan';
 import UpgradeForMoreSites from '../components/onboarding/UpgradeForMoreSites';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +15,7 @@ const AddSitePage: React.FC = () => {
     const steps = ['Add Site', 'Integrations', 'First Scan'];
     const [currentStep, setCurrentStep] = useState(1);
     const [domain, setDomain] = useState<string | null>(null);
+    const [platform, setPlatform] = useState<Platform | null>(null);
     const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
     const handleNextStep = () => {
@@ -25,9 +26,16 @@ const AddSitePage: React.FC = () => {
             navigate('/dashboard');
         }
     };
+
+    const handleBackStep = () => {
+        if (currentStep > 1) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
     
-    const handleDomainEntered = (enteredDomain: string) => {
+    const handleDetailsEntered = (enteredDomain: string, selectedPlatform: Platform) => {
         setDomain(enteredDomain);
+        setPlatform(selectedPlatform);
 
         if (activeSite) {
             // Mock limit: Pro plan gets 1 site, Agency gets 10.
@@ -61,10 +69,10 @@ const AddSitePage: React.FC = () => {
 
         switch (currentStep) {
             case 1:
-                return <StepEnterDomain onDomainEntered={handleDomainEntered} />;
+                return <StepEnterDomain onDetailsEntered={handleDetailsEntered} />;
             case 2:
-                if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
-                return <StepIntegrations domain={domain} onNext={handleNextStep} />;
+                if (!domain || !platform) return <div>Please return to the previous step to enter your domain.</div>;
+                return <StepIntegrations domain={domain} platform={platform} onNext={handleNextStep} onBack={handleBackStep} />;
             case 3:
                 // Note: The original StepScan always sets a "firstLogin" flag. 
                 // A more robust implementation would use a different component or pass a prop.

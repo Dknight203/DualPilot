@@ -6,11 +6,11 @@ import Toast from '../../common/Toast';
 import CmsHelpModal from '../../settings/CmsHelpModal';
 
 interface WordPressFormProps {
-    onBack: () => void;
     onConnected: () => void;
+    onBack?: () => void;
 }
 
-const WordPressForm: React.FC<WordPressFormProps> = ({ onBack, onConnected }) => {
+const WordPressForm: React.FC<WordPressFormProps> = ({ onConnected, onBack }) => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
     const [siteUrl, setSiteUrl] = useState('');
@@ -37,11 +37,10 @@ const WordPressForm: React.FC<WordPressFormProps> = ({ onBack, onConnected }) =>
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             {isHelpModalOpen && <CmsHelpModal onClose={() => setIsHelpModalOpen(false)} />}
             
-            <button onClick={onBack} className="text-sm text-slate-500 hover:underline mb-4">&larr; Back to platform selection</button>
-            <h3 className="font-bold text-lg text-slate-900">Connect Your WordPress Site</h3>
-            <p className="text-sm text-slate-600 mt-1">This enables one-click publishing of AI-optimized content.</p>
+            <h3 className="font-bold text-lg text-slate-900 text-center">Connect Your WordPress Site</h3>
+            <p className="text-sm text-slate-600 mt-1 text-center">This enables one-click publishing of AI-optimized content.</p>
 
-            <form onSubmit={handleConnect} className="mt-6 space-y-4">
+            <form onSubmit={handleConnect} className="mt-6 space-y-4 max-w-md mx-auto">
                 <div>
                     <label className="block text-sm font-medium text-slate-700">WordPress Site URL</label>
                     <Input type="url" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} placeholder="https://yourblog.com" required className="mt-1"/>
@@ -57,7 +56,8 @@ const WordPressForm: React.FC<WordPressFormProps> = ({ onBack, onConnected }) =>
                     </label>
                     <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="xxxx ... xxxx" required className="mt-1 font-mono"/>
                 </div>
-                <div className="text-center pt-2">
+                <div className="text-center pt-2 flex justify-center gap-4">
+                     {onBack && <Button type="button" variant="outline" onClick={onBack}>Back</Button>}
                     <Button type="submit" isLoading={isConnecting}>Connect WordPress</Button>
                 </div>
             </form>
