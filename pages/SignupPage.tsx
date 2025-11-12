@@ -39,7 +39,12 @@ const SignupPage: React.FC = () => {
     const handleOAuthSignup = async (provider: string) => {
         if (!supabase) return;
         
-        const { error } = await supabase.auth.signInWithOAuth({ provider: provider as Provider });
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider as Provider,
+            options: {
+                redirectTo: window.location.origin,
+            }
+        });
 
         if (error) {
             setError(`Failed to sign up with ${provider}. Please try again.`);

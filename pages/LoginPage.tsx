@@ -51,9 +51,11 @@ const LoginPage: React.FC = () => {
     const handleOAuthLogin = async (provider: string) => {
         if (!supabase) return;
         
-        // Configuration for OAuth providers must be done in the Supabase dashboard.
         const { error } = await supabase.auth.signInWithOAuth({
             provider: provider as Provider,
+            options: {
+                redirectTo: window.location.origin,
+            }
         });
 
         if (error) {
