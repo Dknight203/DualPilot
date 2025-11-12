@@ -6,6 +6,8 @@ import OAuthButton from '../components/auth/OAuthButton';
 import Toast from '../components/common/Toast';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
+import { supabase } from '../supabaseClient';
+import { Provider } from '@supabase/supabase-js';
 
 const ChartBarIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -27,7 +29,6 @@ const LoginPage: React.FC = () => {
     useEffect(() => {
         if (location.state?.toast) {
             setToast(location.state.toast);
-            // Clear the location state to prevent toast from re-appearing on refresh
             navigate(location.pathname, { replace: true });
         }
     }, [location, navigate]);
@@ -38,49 +39,28 @@ const LoginPage: React.FC = () => {
         setError('');
 
         try {
-             // Placeholder password check
-            const validPasswords = ['password'];
-            const validEmails = ['test@example.com', 'empty@example.com', 'agency@example.com', 'jane@example.com', 'newbie@example.com'];
-
-            if (validEmails.includes(email) && validPasswords.includes(password)) {
-                await login(email);
-                
-                // Set GSC connection status for demo users
-                if (email !== 'empty@example.com') {
-                    localStorage.setItem('gsc_connected', 'true');
-                } else {
-                    localStorage.removeItem('gsc_connected');
-                }
-
-                // Set first-login flag for the new user
-                if (email === 'newbie@example.com') {
-                    localStorage.setItem('isFirstLogin', 'true');
-                    localStorage.removeItem('dashboardTourCompleted'); // Ensure tour can run
-                }
-
-                navigate('/dashboard');
-            } else {
-                throw new Error('Invalid credentials');
-            }
-        } catch (err) {
-            setError('Invalid credentials. Use a valid test email with password "password".');
+            await login(email, password);
+            navigate('/dashboard');
+        } catch (err: any) {
+            setError(err.message || 'Invalid credentials. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleOAuthLogin = async (provider: string) => {
-        setIsLoading(true);
-        try {
-            const email = `${provider}@example.com`;
-            await login(email);
-            localStorage.setItem('gsc_connected', 'true');
-            navigate('/dashboard');
-        } catch (err) {
-             setError('Failed to log in with OAuth provider.');
-        } finally {
-            setIsLoading(false);
+        if (!supabase) return;
+        
+        // Configuration for OAuth providers must be done in the Supabase dashboard.
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: provider as Provider,
+        });
+
+        if (error) {
+            setError(`Failed to log in with ${provider}. Please try again.`);
+            console.error(error);
         }
+        // Supabase will handle the redirect.
     };
 
     return (

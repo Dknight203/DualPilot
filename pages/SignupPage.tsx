@@ -1,40 +1,72 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Button from '../components/common/Button';
-import { useAuth } from '../components/auth/AuthContext';
 import OAuthButton from '../components/auth/OAuthButton';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
+import { supabase } from '../supabaseClient';
+import { Provider } from '@supabase/supabase-js';
 
 const SignupPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
-    const { login } = useAuth();
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
         
-        // Placeholder logic
-        setTimeout(() => {
-            console.log('Account created successfully');
-            login(email);
-            navigate('/onboarding');
+        if (!supabase) {
+            setError("Supabase client not available.");
             setIsLoading(false);
-        }, 1000);
+            return;
+        }
+
+        try {
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) throw error;
+            setIsSubmitted(true);
+        } catch (err: any) {
+            setError(err.message || 'Failed to create an account.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleOAuthSignup = (provider: string) => {
-        console.log(`Attempting to sign up with ${provider}`);
-        // Placeholder: In a real app, this would trigger the OAuth flow.
-        // For the demo, we'll just log in the user to proceed to onboarding.
-        login(`${provider}@example.com`);
-        navigate('/onboarding');
+    const handleOAuthSignup = async (provider: string) => {
+        if (!supabase) return;
+        
+        const { error } = await supabase.auth.signInWithOAuth({ provider: provider as Provider });
+
+        if (error) {
+            setError(`Failed to sign up with ${provider}. Please try again.`);
+            console.error(error);
+        }
     };
+
+    if (isSubmitted) {
+        return (
+             <AuthCard
+                title="Check your email"
+                subtitle="We've sent a verification link to your email address."
+            >
+                <div className="text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                        <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <p className="mt-4 text-slate-600">Please click the link in the email to complete your registration and sign in.</p>
+                     <div className="mt-6 text-center">
+                        <Link to="/login" className="font-medium text-accent-default hover:text-accent-hover text-sm">
+                            &larr; Back to login
+                        </Link>
+                    </div>
+                </div>
+            </AuthCard>
+        );
+    }
 
     return (
         <AuthCard

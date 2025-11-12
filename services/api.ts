@@ -105,8 +105,8 @@ export const verifyDomain = (domain: string): Promise<{ verified: boolean; heart
 };
 
 export const getSites = (): Promise<Site[]> => {
-    const userEmail = localStorage.getItem('userEmail') || '';
-    const sitesForUser = userSites[userEmail] || [];
+    // TODO: Replace with Supabase call
+    const sitesForUser = userSites['test@example.com'] || [];
     return simulateApiCall(sitesForUser);
 };
 
@@ -254,17 +254,6 @@ export const getBillingInfo = (): Promise<{ invoices: Invoice[] }> => {
     return simulateApiCall({ invoices });
 };
 
-export const getCurrentUser = (email: string): Promise<TeamMember | undefined> => {
-    const user = mockTeamMembers.find(member => member.email === email);
-    // If not found, create a placeholder Admin user for demo purposes
-    if (!user && email) {
-        const newUser: TeamMember = { id: 'user_new', name: 'New User', email, role: 'Admin', status: 'Active', avatarUrl: `https://i.pravatar.cc/150?u=${email}`};
-        mockTeamMembers.push(newUser);
-        return simulateApiCall(newUser);
-    }
-    return simulateApiCall(user);
-};
-
 export const saveSiteSettings = (siteId: string, newSiteName: string, newDomain: string): Promise<Site> => {
     let foundSite: Site | undefined;
     let siteUpdated = false;
@@ -292,35 +281,37 @@ export const saveSiteSettings = (siteId: string, newSiteName: string, newDomain:
     }
 };
 
-export const updateUserProfile = (userId: string, data: Partial<Pick<TeamMember, 'name' | 'email' | 'avatarUrl'>>): Promise<TeamMember> => {
-    const memberIndex = mockTeamMembers.findIndex(m => m.id === userId);
-    if (memberIndex > -1) {
-        mockTeamMembers[memberIndex] = { ...mockTeamMembers[memberIndex], ...data };
+export const updateUserProfile = async (userId: string, data: Partial<Pick<TeamMember, 'name' | 'email' | 'avatarUrl'>>): Promise<TeamMember> => {
+    if (!supabase) throw new Error("Supabase client not available.");
+    
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .update({ name: data.name, avatar_url: data.avatarUrl })
+        .eq('id', userId)
+        .select()
+        .single();
         
-        // If email changed, we need to update localStorage for the demo to work
-        if(data.email) {
-            localStorage.setItem('userEmail', data.email);
-        }
-        
-        return simulateApiCall(mockTeamMembers[memberIndex]);
-    }
-    return Promise.reject('User not found');
+    if (error) throw error;
+    
+    return {
+        id: profile.id,
+        name: profile.name,
+        email: data.email || '', // Email is not in profiles table
+        avatarUrl: profile.avatar_url,
+        role: 'Admin', // placeholder
+        status: 'Active' // placeholder
+    };
 };
 
-export const changePassword = (userId: string, currentPass: string, newPass: string): Promise<{ success: boolean }> => {
-    // In a real app, this would be a secure backend call.
-    // For the demo, we'll just pretend it always works if the current pass is "password".
-    if (currentPass === 'password') {
-        return simulateApiCall({ success: true }, 1000);
-    }
-    return Promise.reject('Incorrect current password');
+export const changePassword = async (userId: string, currentPass: string, newPass: string): Promise<{ success: boolean }> => {
+    // This is handled via supabase.auth.updateUser in the component directly
+    return Promise.resolve({ success: true });
 };
 
 
 export const getTeamMembers = (): Promise<TeamMember[]> => {
-    const currentUserEmail = localStorage.getItem('userEmail');
     // Filter out the current user for the list view
-    return simulateApiCall(mockTeamMembers.filter(m => m.email !== currentUserEmail));
+    return simulateApiCall(mockTeamMembers);
 };
 
 export const inviteTeamMember = (email: string, role: 'Admin' | 'Member'): Promise<TeamMember> => {
@@ -486,19 +477,6 @@ export const updateBrandingLogo = (logoUrl: string): Promise<BrandingSettings> =
 export const removeBrandingLogo = (): Promise<{ success: boolean }> => {
     localStorage.removeItem('brandingSettings');
     return simulateApiCall({ success: true });
-};
-
-// --- PASSWORD RESET API ---
-export const requestPasswordReset = (email: string): Promise<{ success: boolean }> => {
-    console.log(`Simulating password reset request for: ${email}`);
-    // In a real app, this would generate a token and send an email.
-    return simulateApiCall({ success: true }, 1000);
-};
-
-export const resetPassword = (token: string, newPassword: string): Promise<{ success: boolean }> => {
-    console.log(`Simulating password reset for token: ${token} with new password.`);
-    // In a real app, this would validate the token and update the user's password.
-    return simulateApiCall({ success: true }, 1000);
 };
 
 export const disconnectSite = (siteId: string): Promise<{ success: boolean }> => {

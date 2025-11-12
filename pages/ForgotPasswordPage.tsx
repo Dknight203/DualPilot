@@ -1,24 +1,37 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/common/Button';
-import { requestPasswordReset } from '../services/api';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
+import { supabase } from '../supabaseClient';
 
 const ForgotPasswordPage: React.FC = () => {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError('');
+
+        if (!supabase) {
+            setError("Supabase client not available.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            await requestPasswordReset(email);
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + '/#/reset-password',
+            });
+            if (error) throw error;
             setIsSubmitted(true);
-        } catch (error) {
-            // Even on error, we show a generic message to prevent email enumeration
-            setIsSubmitted(true);
+        } catch (err: any) {
+            // Even on error, we show a generic success message to prevent email enumeration attacks
+            console.error("Password reset error:", err.message);
+            setIsSubmitted(true); 
         } finally {
             setIsLoading(false);
         }
@@ -41,6 +54,7 @@ const ForgotPasswordPage: React.FC = () => {
                 </div>
             ) : (
                 <form className="space-y-6" onSubmit={handleSubmit}>
+                    {error && <p className="text-sm text-red-600">{error}</p>}
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
                         <div className="mt-1">

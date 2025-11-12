@@ -1,18 +1,31 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
-import { resetPassword } from '../services/api';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
+import { supabase } from '../supabaseClient';
+import { useAuth } from '../components/auth/AuthContext';
 
 const ResetPasswordPage: React.FC = () => {
-    const { token } = useParams<{ token: string }>();
     const navigate = useNavigate();
+    const { session } = useAuth();
     
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+
+    useEffect(() => {
+        // Supabase client handles the hash fragment from the URL automatically
+        // and fires a PASSWORD_RECOVERY event, which updates the session.
+        // We check if the user is logged in via this special session.
+        if (session) {
+            setIsPasswordRecovery(true);
+        } else {
+            setError('Invalid or expired password reset link. Please request a new one.');
+        }
+    }, [session]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,14 +35,19 @@ const ResetPasswordPage: React.FC = () => {
             setError('Passwords do not match.');
             return;
         }
-        if (!token) {
+        if (!isPasswordRecovery || !supabase) {
             setError('Invalid or expired reset token.');
             return;
         }
         
         setIsLoading(true);
         try {
-            await resetPassword(token, newPassword);
+            const { error } = await supabase.auth.updateUser({ password: newPassword });
+            if (error) throw error;
+
+            // Log the user out of the temporary session before redirecting
+            await supabase.auth.signOut();
+            
             navigate('/login', { 
                 state: { 
                     toast: {
@@ -38,8 +56,8 @@ const ResetPasswordPage: React.FC = () => {
                     }
                 }
             });
-        } catch (err) {
-            setError('Failed to reset password. The link may have expired.');
+        } catch (err: any) {
+            setError(err.message || 'Failed to reset password. The link may have expired.');
         } finally {
             setIsLoading(false);
         }
@@ -61,6 +79,7 @@ const ResetPasswordPage: React.FC = () => {
                             required
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
+                            disabled={!isPasswordRecovery}
                         />
                     </div>
                 </div>
@@ -75,6 +94,7 @@ const ResetPasswordPage: React.FC = () => {
                             required 
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
+                            disabled={!isPasswordRecovery}
                         />
                     </div>
                 </div>
@@ -82,7 +102,7 @@ const ResetPasswordPage: React.FC = () => {
                 {error && <p className="text-sm text-red-600">{error}</p>}
 
                 <div>
-                    <Button type="submit" className="w-full" isLoading={isLoading}>
+                    <Button type="submit" className="w-full" isLoading={isLoading} disabled={!isPasswordRecovery}>
                         Update Password
                     </Button>
                 </div>
