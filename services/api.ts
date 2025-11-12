@@ -5,6 +5,7 @@ import {
     InitialOptimizations, BrandingSettings
 } from '../types';
 import { GoogleGenAI } from '@google/genai';
+import { supabase } from '../supabaseClient';
 
 // --- MOCK DATA ---
 const userSites: { [key: string]: Site[] } = {
