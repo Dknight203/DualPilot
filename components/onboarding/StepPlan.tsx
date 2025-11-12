@@ -33,12 +33,12 @@ const StepPlan: React.FC<StepPlanProps> = ({ user, domain, platform, siteProfile
                 // Force the Agency plan to give the admin full access
                 await addSite(domain, platform, PlanId.Agency, siteProfile);
                 await refreshSites(); // Refresh the site list in the context
+                setIsLoading(false); // Set loading to false BEFORE navigating
                 onPlanSelected();
             } catch (err) {
                 console.error('Failed to create admin site:', err);
                 setError('Could not create your admin site. Please try again.');
-            } finally {
-                setIsLoading(false);
+                setIsLoading(false); // Also set loading to false on error
             }
         } else {
             // For regular users, since Stripe is not integrated, show a message.

@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: TeamMember | null;
   login: (email: string, password?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   // FIX: Changed Session type to any to resolve import error.
   session: any | null;

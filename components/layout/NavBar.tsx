@@ -10,8 +10,8 @@ const NavBar: React.FC = () => {
   const { sites, isLoading: isSiteLoading } = useSite();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
   
