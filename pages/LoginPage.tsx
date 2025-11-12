@@ -53,8 +53,9 @@ const LoginPage: React.FC = () => {
         if (!supabase) return;
         
         // FIX: Replaced signIn (v1 syntax) with signInWithOAuth (v2) to match Supabase types.
+        // FIX: Map 'microsoft' to 'azure' which is the correct Supabase provider name.
         const { error } = await supabase.auth.signInWithOAuth({
-            provider: provider,
+            provider: provider === 'microsoft' ? 'azure' : provider,
             options: {
                 redirectTo: window.location.origin,
             }

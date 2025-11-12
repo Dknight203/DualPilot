@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import OAuthButton from '../components/auth/OAuthButton';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
 import { supabase } from '../supabaseClient';
-// FIX: Removed failing import for 'Provider', which is not a top-level export in Supabase v1.
-// import { Provider } from '@supabase/supabase-js';
 
 const SignupPage: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -14,6 +12,7 @@ const SignupPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const navigate = useNavigate();
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,10 +26,19 @@ const SignupPage: React.FC = () => {
         }
 
         try {
-            // FIX: signUp error was likely a cascade from other type errors. The syntax is correct for v1.
-            const { error } = await supabase.auth.signUp({ email, password });
+            const { data, error } = await supabase.auth.signUp({ email, password });
             if (error) throw error;
-            setIsSubmitted(true);
+            
+            // On successful signup, Supabase sends a verification email.
+            // If the user is successfully created, we can proceed to onboarding.
+            if (data.user) {
+                // We navigate to onboarding immediately after signup.
+                // The user will need to verify their email later, but can start setting up.
+                navigate('/onboarding');
+            } else {
+                 setIsSubmitted(true); // Show "Check your email" as a fallback
+            }
+
         } catch (err: any) {
             setError(err.message || 'Failed to create an account.');
         } finally {
@@ -41,11 +49,11 @@ const SignupPage: React.FC = () => {
     const handleOAuthSignup = async (provider: 'google' | 'microsoft') => {
         if (!supabase) return;
         
-        // FIX: Replaced signIn (v1 syntax) with signInWithOAuth (v2) to match Supabase types.
+        // FIX: Map 'microsoft' to 'azure' which is the correct Supabase provider name.
         const { error } = await supabase.auth.signInWithOAuth({
-            provider: provider,
+            provider: provider === 'microsoft' ? 'azure' : provider,
             options: {
-                redirectTo: window.location.origin,
+                redirectTo: `${window.location.origin}/#/onboarding`, // Redirect to onboarding after OAuth
             }
         });
 

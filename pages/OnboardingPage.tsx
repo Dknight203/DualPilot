@@ -6,12 +6,18 @@ import StepPlan from '../components/onboarding/StepPlan';
 import StepGscConnect from '../components/onboarding/StepGscConnect';
 import StepIntegrations, { Platform } from '../components/onboarding/StepIntegrations';
 import StepScan from '../components/onboarding/StepScan';
+import { useAuth } from '../components/auth/AuthContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const OnboardingPage: React.FC = () => {
+    const { user } = useAuth();
     const steps = ['Your Site', 'Your Profile', 'Choose Plan', 'Connect GSC', 'Integrations', 'First Scan'];
     const [currentStep, setCurrentStep] = useState(1);
+    
+    // State to be collected through the wizard
     const [domain, setDomain] = useState<string | null>(null);
     const [platform, setPlatform] = useState<Platform | null>(null);
+    const [siteProfile, setSiteProfile] = useState<string | null>(null);
 
     const handleNextStep = () => {
         if (currentStep < steps.length) {
@@ -30,6 +36,11 @@ const OnboardingPage: React.FC = () => {
         setPlatform(selectedPlatform);
         handleNextStep();
     };
+    
+    const handleProfileConfirmed = (profile: string) => {
+        setSiteProfile(profile);
+        handleNextStep();
+    }
 
     const handleStepClick = (step: number) => {
         if (step < currentStep) {
@@ -38,14 +49,19 @@ const OnboardingPage: React.FC = () => {
     }
     
     const renderStep = () => {
+        if (!user) {
+            return <div className="flex justify-center py-10"><LoadingSpinner text="Loading user session..." /></div>;
+        }
+
         switch (currentStep) {
             case 1:
                 return <StepEnterDomain onDetailsEntered={handleDetailsEntered} />;
             case 2:
                 if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
-                return <StepConfirmProfile domain={domain} onProfileConfirmed={handleNextStep} onBack={handleBackStep} />;
+                return <StepConfirmProfile domain={domain} onProfileConfirmed={handleProfileConfirmed} onBack={handleBackStep} />;
             case 3:
-                return <StepPlan onPlanSelected={handleNextStep} onBack={handleBackStep} />;
+                if (!domain || !platform || !siteProfile) return <div>Please complete previous steps.</div>
+                return <StepPlan user={user} domain={domain} platform={platform} siteProfile={siteProfile} onPlanSelected={handleNextStep} onBack={handleBackStep} />;
             case 4:
                 return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
             case 5:
