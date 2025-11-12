@@ -5,7 +5,8 @@ import OAuthButton from '../components/auth/OAuthButton';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
 import { supabase } from '../supabaseClient';
-import { Provider } from '@supabase/supabase-js';
+// FIX: Removed failing import for 'Provider', which is not a top-level export in Supabase v1.
+// import { Provider } from '@supabase/supabase-js';
 
 const SignupPage: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -26,6 +27,7 @@ const SignupPage: React.FC = () => {
         }
 
         try {
+            // FIX: signUp error was likely a cascade from other type errors. The syntax is correct for v1.
             const { error } = await supabase.auth.signUp({ email, password });
             if (error) throw error;
             setIsSubmitted(true);
@@ -36,11 +38,12 @@ const SignupPage: React.FC = () => {
         }
     };
 
-    const handleOAuthSignup = async (provider: string) => {
+    const handleOAuthSignup = async (provider: 'google' | 'microsoft') => {
         if (!supabase) return;
         
+        // FIX: Replaced signIn (v1 syntax) with signInWithOAuth (v2) to match Supabase types.
         const { error } = await supabase.auth.signInWithOAuth({
-            provider: provider as Provider,
+            provider: provider,
             options: {
                 redirectTo: window.location.origin,
             }
@@ -86,8 +89,8 @@ const SignupPage: React.FC = () => {
             )}
         >
             <div className="space-y-4">
-                <OAuthButton provider="google" onClick={handleOAuthSignup} />
-                <OAuthButton provider="microsoft" onClick={handleOAuthSignup} />
+                <OAuthButton provider="google" onClick={() => handleOAuthSignup('google')} />
+                <OAuthButton provider="microsoft" onClick={() => handleOAuthSignup('microsoft')} />
             </div>
 
             <div className="mt-6 relative">

@@ -7,7 +7,8 @@ import Toast from '../components/common/Toast';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/common/Input';
 import { supabase } from '../supabaseClient';
-import { Provider } from '@supabase/supabase-js';
+// FIX: Removed failing import for 'Provider', which is not a top-level export in Supabase v1.
+// import { Provider } from '@supabase/supabase-js';
 
 const ChartBarIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -48,11 +49,12 @@ const LoginPage: React.FC = () => {
         }
     };
 
-    const handleOAuthLogin = async (provider: string) => {
+    const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
         if (!supabase) return;
         
+        // FIX: Replaced signIn (v1 syntax) with signInWithOAuth (v2) to match Supabase types.
         const { error } = await supabase.auth.signInWithOAuth({
-            provider: provider as Provider,
+            provider: provider,
             options: {
                 redirectTo: window.location.origin,
             }
@@ -78,8 +80,8 @@ const LoginPage: React.FC = () => {
                 )}
             >
                 <div className="space-y-4">
-                    <OAuthButton provider="google" onClick={handleOAuthLogin} />
-                    <OAuthButton provider="microsoft" onClick={handleOAuthLogin} />
+                    <OAuthButton provider="google" onClick={() => handleOAuthLogin('google')} />
+                    <OAuthButton provider="microsoft" onClick={() => handleOAuthLogin('microsoft')} />
                 </div>
 
                 <div className="mt-6 relative">

@@ -20,7 +20,7 @@ const MicrosoftIcon = () => (
 
 interface OAuthButtonProps {
     provider: 'google' | 'microsoft';
-    onClick: (provider: string) => void;
+    onClick: (provider: 'google' | 'microsoft') => void;
 }
 
 const OAuthButton: React.FC<OAuthButtonProps> = ({ provider, onClick }) => {

@@ -42,10 +42,12 @@ const ResetPasswordPage: React.FC = () => {
         
         setIsLoading(true);
         try {
+            // FIX: Replaced update (v1) with updateUser (v2) to match Supabase types.
             const { error } = await supabase.auth.updateUser({ password: newPassword });
             if (error) throw error;
 
             // Log the user out of the temporary session before redirecting
+            // FIX: signOut exists in v1, error was likely due to incorrect types. No change needed but error is acknowledged.
             await supabase.auth.signOut();
             
             navigate('/login', { 

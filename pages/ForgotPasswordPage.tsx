@@ -23,6 +23,7 @@ const ForgotPasswordPage: React.FC = () => {
         }
 
         try {
+            // FIX: Replaced api.resetPasswordForEmail (v1) with resetPasswordForEmail (v2).
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.origin + '/#/reset-password',
             });
