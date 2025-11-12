@@ -17,23 +17,36 @@ interface StepPlanProps {
     onBack: () => void;
 }
 
+const ADMIN_EMAIL = 'chrisley.ceme@gmail.com';
+
 const StepPlan: React.FC<StepPlanProps> = ({ user, domain, platform, siteProfile, onPlanSelected, onBack }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { refreshSites } = useSite();
 
     const handleSelectPlan = async (planId: PlanId) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            await addSite(domain, platform, planId, siteProfile);
-            await refreshSites(); // Refresh the site list in the context
-            onPlanSelected();
-        } catch (err) {
-            console.error('Failed to create site:', err);
-            setError('Could not create your site. Please try again.');
-        } finally {
-            setIsLoading(false);
+        // If user is the admin, bypass payment and create the site with the highest-tier plan.
+        if (user.email === ADMIN_EMAIL) {
+            setIsLoading(true);
+            setError(null);
+            try {
+                // Force the Agency plan to give the admin full access
+                await addSite(domain, platform, PlanId.Agency, siteProfile);
+                await refreshSites(); // Refresh the site list in the context
+                onPlanSelected();
+            } catch (err) {
+                console.error('Failed to create admin site:', err);
+                setError('Could not create your admin site. Please try again.');
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            // For regular users, since Stripe is not integrated, show a message.
+            if (planId === PlanId.Enterprise) {
+                 alert('Please contact sales to learn more about our Enterprise plan.');
+            } else {
+                 alert('Online checkout is coming soon! For now, only admin accounts can be created through this flow.');
+            }
         }
     };
 
@@ -43,8 +56,6 @@ const StepPlan: React.FC<StepPlanProps> = ({ user, domain, platform, siteProfile
             <h2 className="text-2xl font-bold text-center text-slate-900">Choose Your Plan</h2>
             <p className="mt-2 text-center text-slate-600">You can upgrade, downgrade, or cancel at any time.</p>
             <div className="mt-8">
-                {/* We need to adapt PlanCards or handle loading state here */}
-                {/* For now, we pass a wrapped function to handle the async operation */}
                 <PlanCards plans={PRICING_PLANS} onSelectPlan={(planId) => handleSelectPlan(planId as PlanId)} />
             </div>
             {isLoading && <p className="text-center mt-4">Creating your site...</p>}

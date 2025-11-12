@@ -15,6 +15,7 @@ export interface Plan {
     pages: number | 'Unlimited';
     refresh: string;
     features: string[];
+    isFeatured?: boolean;
 }
 
 export interface Site {

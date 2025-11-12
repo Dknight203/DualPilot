@@ -31,6 +31,7 @@ export const PRICING_PLANS: Plan[] = [
       'Priority Support',
       'Advanced Analytics',
     ],
+    isFeatured: true,
   },
   {
     id: PlanId.Agency,
