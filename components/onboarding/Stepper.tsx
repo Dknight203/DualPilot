@@ -17,18 +17,15 @@ const Stepper: React.FC<StepperProps> = ({ steps, currentStep, onStepClick }) =>
                                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                                     <div className="h-0.5 w-full bg-accent-default" />
                                 </div>
-                                <div
-                                    role="button"
-                                    tabIndex={0}
+                                <button
                                     onClick={() => onStepClick(stepIdx + 1)}
-                                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onStepClick(stepIdx + 1)}
                                     className="relative w-8 h-8 flex items-center justify-center bg-accent-default rounded-full hover:bg-accent-hover cursor-pointer"
                                 >
                                     <svg className="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                         <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" />
                                     </svg>
                                     <span className="sr-only">{step}</span>
-                                </div>
+                                </button>
                             </>
                         ) : stepIdx === currentStep ? (
                              <>
