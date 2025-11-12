@@ -119,6 +119,10 @@ export const addSite = async (
 export const updateUserProfile = async (userId: string, data: Partial<{ name: string; avatarUrl: string; email: string }>): Promise<TeamMember> => {
     if (!supabase) throw new Error("Supabase client not available.");
 
+    const profileUpdateData: { name?: string; avatar_url?: string; email?: string; } = {};
+    if (data.name) profileUpdateData.name = data.name;
+    if (data.avatarUrl) profileUpdateData.avatar_url = data.avatarUrl;
+
     // Update auth user if email is provided and has changed
     if (data.email) {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -128,12 +132,10 @@ export const updateUserProfile = async (userId: string, data: Partial<{ name: st
                 console.error("Error updating user email:", authError);
                 throw authError;
             }
+             // Also update the email in the profiles table for consistency
+            profileUpdateData.email = data.email;
         }
     }
-    
-    const profileUpdateData: { name?: string; avatar_url?: string } = {};
-    if (data.name) profileUpdateData.name = data.name;
-    if (data.avatarUrl) profileUpdateData.avatar_url = data.avatarUrl;
 
     // Only update profile if there's data to update
     if (Object.keys(profileUpdateData).length > 0) {

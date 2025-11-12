@@ -5,7 +5,7 @@ import Textarea from '../common/Textarea';
 
 interface StepConfirmProfileProps {
     domain: string;
-    onProfileConfirmed: () => void;
+    onProfileConfirmed: (profile: string) => void;
     onBack: () => void;
 }
 
@@ -27,7 +27,7 @@ const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ domain, onProfi
         e.preventDefault();
         console.log('Site profile confirmed:', summary);
         localStorage.setItem('siteProfile', summary); // Save the profile for other parts of the app
-        onProfileConfirmed();
+        onProfileConfirmed(summary);
     };
 
     return (

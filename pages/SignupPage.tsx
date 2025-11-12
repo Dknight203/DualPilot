@@ -29,14 +29,12 @@ const SignupPage: React.FC = () => {
             const { data, error } = await supabase.auth.signUp({ email, password });
             if (error) throw error;
             
-            // On successful signup, Supabase sends a verification email.
-            // If the user is successfully created, we can proceed to onboarding.
-            if (data.user) {
-                // We navigate to onboarding immediately after signup.
-                // The user will need to verify their email later, but can start setting up.
+            // If a session is returned, the user is logged in (e.g., auto-confirm is on).
+            // Otherwise, they need to verify their email.
+            if (data.session) {
                 navigate('/onboarding');
             } else {
-                 setIsSubmitted(true); // Show "Check your email" as a fallback
+                 setIsSubmitted(true); // Show "Check your email" message
             }
 
         } catch (err: any) {
