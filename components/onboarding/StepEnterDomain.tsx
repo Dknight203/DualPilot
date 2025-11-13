@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import { Platform } from '../../types';
+import { Platform, Site } from '../../types';
 import CustomSelect from '../common/CustomSelect';
+import { createSiteForOnboarding } from '../../services/api';
+import Toast from '../common/Toast';
 
 interface StepEnterDomainProps {
-    onDetailsEntered: (domain: string, platform: Platform) => void;
+    onDetailsEntered: (newSite: Site) => void;
 }
 
 const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) => {
@@ -13,6 +15,8 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
     const [platform, setPlatform] = useState<Platform | ''>('');
     const [showPlatformSelect, setShowPlatformSelect] = useState(false);
     const [isPlatformSelectOpen, setIsPlatformSelectOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: 'error' } | null>(null);
 
     const platformOptions = [
         { value: 'wordpress', label: 'WordPress' },
@@ -29,17 +33,27 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
         }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Basic sanitization to get the root domain
         const sanitizedDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, "").split('/')[0];
-        if (sanitizedDomain && platform) {
-            onDetailsEntered(sanitizedDomain, platform as Platform);
+        if (!sanitizedDomain || !platform) return;
+        
+        setIsSubmitting(true);
+        setToast(null);
+
+        try {
+            const newSite = await createSiteForOnboarding(sanitizedDomain, platform as Platform);
+            onDetailsEntered(newSite);
+        } catch (error) {
+            console.error("Failed to create site:", error);
+            setToast({ message: 'Could not create your site. Please try again.', type: 'error' });
+            setIsSubmitting(false);
         }
     };
 
     return (
         <div>
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <h2 className="text-2xl font-bold text-center text-slate-900">Let's get started with your site</h2>
             <p className="mt-2 text-center text-slate-600">Enter the primary domain you want to optimize and select its platform.</p>
             
@@ -54,6 +68,7 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
                         placeholder="e.g., yourwebsite.com"
                         required
                         className="text-center text-lg h-12"
+                        disabled={isSubmitting}
                     />
                 </div>
                 
@@ -75,7 +90,7 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
 
                 {!isPlatformSelectOpen && (
                     <div className="text-center pt-2">
-                        <Button type="submit" size="lg" disabled={!domain || !platform}>
+                        <Button type="submit" size="lg" disabled={!domain || !platform || isSubmitting} isLoading={isSubmitting}>
                             Continue
                         </Button>
                     </div>

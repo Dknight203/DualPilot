@@ -60,11 +60,15 @@ export const getSites = async (userId: string): Promise<Site[]> => {
         totalPages: site.total_pages || 0,
         visibilityScore: site.visibility_score || 0,
         refreshPolicy: site.refresh_policy || 'Daily refresh',
+        platform: site.platform,
+        // Add new fields for polling
+        siteProfile: site.site_profile,
+        siteProfileStatus: site.site_profile_status,
     }));
 };
 
 /**
- * Adds a new site to the database for the currently authenticated user.
+ * Adds a new site for an existing user (used in AddSitePage).
  */
 export const addSite = async (
     domain: string,
@@ -83,7 +87,8 @@ export const addSite = async (
         domain: domain,
         plan: planId,
         site_profile: siteProfile,
-        platform: platform, // Add the platform to the data being inserted
+        platform: platform, 
+        site_profile_status: 'completed', // Manually added, so it's complete
     };
     
     const { data, error } = await supabase
@@ -109,8 +114,129 @@ export const addSite = async (
     };
 };
 
+/**
+ * Creates a site record and triggers the background summary generation job.
+ * Used in the first step of the onboarding flow.
+ */
+export const createSiteForOnboarding = async (domain: string, platform: Platform): Promise<Site> => {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User must be logged in to add a site.");
 
-// FIX: Update function signature to accept email and handle auth email updates.
+    // 1. Create the site record with a 'pending' status
+    const newSiteData = {
+        owner_id: user.id,
+        site_name: domain,
+        domain: domain,
+        platform: platform,
+        site_profile_status: 'pending',
+    };
+    
+    const { data, error } = await supabase
+        .from('sites')
+        .insert(newSiteData)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error creating site record:', error);
+        throw error;
+    }
+
+    // 2. Trigger the background function without waiting for it to complete
+    supabase.functions.invoke('generate-summary', {
+        body: { site_id: data.id },
+    }).catch(invokeError => {
+        // Log the error, but don't block the UI
+        console.error('Failed to invoke generate-summary function:', invokeError);
+    });
+
+    // 3. Return the newly created site object
+    return {
+        id: data.id,
+        siteName: data.site_name,
+        domain: data.domain,
+        plan: data.plan,
+        optimizedPages: 0,
+        totalPages: 0,
+        visibilityScore: 0,
+        refreshPolicy: '',
+        // FIX: Added platform to the returned object to match the Site type and fix consumer component errors.
+        platform: data.platform,
+    };
+};
+
+/**
+ * Polls the database until the site profile generation is complete or failed.
+ */
+export const pollForSiteProfile = (siteId: string): Promise<Site> => {
+    const MAX_POLLS = 15; // 15 polls * 2 seconds = 30 seconds timeout
+    const POLL_INTERVAL = 2000; // 2 seconds
+
+    return new Promise((resolve, reject) => {
+        let pollCount = 0;
+
+        const poll = async () => {
+            if (pollCount >= MAX_POLLS) {
+                return reject(new Error("Timed out waiting for site profile generation."));
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('sites')
+                    .select('*')
+                    .eq('id', siteId)
+                    .single();
+                
+                if (error) throw error;
+                
+                if (data.site_profile_status === 'completed' || data.site_profile_status === 'failed') {
+                    const siteResult: Site = {
+                        id: data.id,
+                        siteName: data.site_name,
+                        domain: data.domain,
+                        plan: data.plan,
+                        optimizedPages: 0,
+                        totalPages: 0,
+                        visibilityScore: 0,
+                        refreshPolicy: '',
+                        platform: data.platform,
+                        siteProfile: data.site_profile || '',
+                        siteProfileStatus: data.site_profile_status,
+                    };
+                    resolve(siteResult);
+                } else {
+                    pollCount++;
+                    setTimeout(poll, POLL_INTERVAL);
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+                reject(new Error("An error occurred while checking for the site profile."));
+            }
+        };
+
+        poll();
+    });
+};
+
+/**
+ * Updates a site record. Used for setting plan and final profile in onboarding.
+ */
+export const updateSite = async (siteId: string, updates: Partial<{ plan: PlanId; site_profile: string }>): Promise<void> => {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+
+    const { error } = await supabase
+        .from('sites')
+        .update(updates)
+        .eq('id', siteId);
+    
+    if (error) {
+        console.error('Error updating site:', error);
+        throw error;
+    }
+};
+
 export const updateUserProfile = async (userId: string, data: Partial<{ name: string; avatarUrl: string; email: string }>): Promise<TeamMember> => {
     if (!supabase) throw new Error("Supabase client not available.");
 
@@ -118,7 +244,6 @@ export const updateUserProfile = async (userId: string, data: Partial<{ name: st
     if (data.name) profileUpdateData.name = data.name;
     if (data.avatarUrl) profileUpdateData.avatar_url = data.avatarUrl;
 
-    // Update auth user if email is provided and has changed
     if (data.email) {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (currentUser && currentUser.email !== data.email) {
@@ -127,12 +252,10 @@ export const updateUserProfile = async (userId: string, data: Partial<{ name: st
                 console.error("Error updating user email:", authError);
                 throw authError;
             }
-             // Also update the email in the profiles table for consistency
             profileUpdateData.email = data.email;
         }
     }
 
-    // Only update profile if there's data to update
     if (Object.keys(profileUpdateData).length > 0) {
         const { error: profileError } = await supabase
             .from('profiles')
@@ -142,7 +265,6 @@ export const updateUserProfile = async (userId: string, data: Partial<{ name: st
         if (profileError) throw profileError;
     }
     
-    // Refetch latest profile and user data to return a consistent object
     const { data: profile, error: fetchProfileError } = await supabase
         .from('profiles')
         .select('*')
@@ -163,13 +285,9 @@ export const updateUserProfile = async (userId: string, data: Partial<{ name: st
     };
 };
 
-// FIX: Add and export changePassword function to resolve import error in Profile.tsx.
 export const changePassword = async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
     if (!supabase) throw new Error("Supabase client not available.");
     
-    // Supabase's updateUser for a logged-in user doesn't require the old password.
-    // The presence of currentPassword in the function signature suggests it might be used
-    // for a future backend or for reauthentication, but we'll proceed with the direct update for now.
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
@@ -182,9 +300,7 @@ export const changePassword = async (userId: string, currentPassword: string, ne
 // --- MOCK FUNCTIONS (to be replaced) ---
 
 export const getSitePageCount = async (domain: string): Promise<number> => {
-    // Simulate a quick scan to get page count for plan validation
     await new Promise(res => setTimeout(res, 2500));
-    // Return a random number for demo purposes
     return Math.floor(Math.random() * 500) + 10;
 };
 
@@ -199,7 +315,7 @@ export const createCheckoutSession = (planId: string): Promise<{ checkoutUrl: st
 };
 
 export const getDashboardData = (siteId: string) => {
-    const site = { id: siteId, siteName: 'Demo Site', domain: 'demo.com', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' };
+    const site: Site = { id: siteId, siteName: 'Demo Site', domain: 'demo.com', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' };
     const visibilityTrend: LineChartData[] = Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString(), score: 80 + Math.sin(i / 3) * 5 }));
     const issuesFixed: StackedBarChartData[] = Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.now() - (29 - i) * 86400000).toISOString(), title: Math.floor(Math.random() * 5), description: Math.floor(Math.random() * 8), canonical: Math.floor(Math.random() * 2), schema: Math.floor(Math.random() * 4), brokenLinks: Math.floor(Math.random() * 1) }));
     const pageStatus: PieChartData[] = [{ name: PageStatus.Optimized, value: 180 }, { name: PageStatus.NeedsReview, value: 45 }, { name: PageStatus.Pending, value: 25 }];
@@ -236,7 +352,7 @@ export const optimizePage = (pageId: string): Promise<PageOutput> => simulateApi
 export const approveOptimization = (pageId: string, newOutput: PageOutput): Promise<{ success: boolean }> => simulateApiCall({ success: true });
 export const getBillingInfo = (): Promise<{ invoices: Invoice[] }> => simulateApiCall({ invoices: [] });
 export const saveSiteSettings = (siteId: string, newSiteName: string, newDomain: string): Promise<Site> => {
-    const updatedSite = { id: siteId, siteName: newSiteName, domain: newDomain, plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' };
+    const updatedSite: Site = { id: siteId, siteName: newSiteName, domain: newDomain, plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' };
     return simulateApiCall(updatedSite);
 }
 export const getTeamMembers = (): Promise<TeamMember[]> => simulateApiCall([]);
@@ -286,7 +402,6 @@ export const generateAiSummary = async (domain: string): Promise<string> => {
         return data.summary || "No summary returned.";
     } catch (error: any) {
         console.error('Error generating AI summary:', error);
-        // Return the specific error message from the backend if available, otherwise a generic one.
         return error?.message || "An error occurred while generating the summary. Please try again later.";
     }
 };

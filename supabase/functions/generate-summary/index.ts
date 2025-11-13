@@ -3,20 +3,16 @@
 declare var Deno: any;
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // IMPORTANT: You must import the GoogleGenAI module from esm.sh for it to work in Deno
 import { GoogleGenAI } from 'https://esm.sh/@google/genai'
 
 // --- CORS HEADERS ---
-// This is crucial for allowing your Vercel frontend to call this function.
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
-
-// This function will read the GEMINI_API_KEY from your Supabase Project's Environment Variables
-// Go to your Supabase Project > Settings > Functions and add GEMINI_API_KEY
-const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
 
 // Helper to strip HTML and clean up text
 function stripHtml(html: string): string {
@@ -28,73 +24,104 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-// This is the main function that will be executed when the edge function is invoked
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
   
+  let siteId = '';
   try {
-    const { domain } = await req.json()
-    if (!domain) {
-      return new Response(JSON.stringify({ error: 'Domain is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    
-    if (!GEMINI_API_KEY) {
-      console.error("GEMINI_API_KEY environment variable not set in Supabase project settings.")
-      return new Response(JSON.stringify({ error: 'The server is not configured correctly.' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    
-    // --- Step 1: Fetch website content directly ---
-    let websiteText = '';
-    try {
-        const response = await fetch(`https://${domain}`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to fetch domain with status: ${response.status}`);
-        }
-        const html = await response.text();
-        const bodyText = stripHtml(html);
-        // Limit to first 8000 characters to be safe with token limits
-        websiteText = bodyText.substring(0, 8000); 
-    } catch (fetchError) {
-        console.error(`Error fetching content for ${domain}:`, fetchError);
-        return new Response(JSON.stringify({ error: `Could not retrieve content from ${domain}. Please ensure the domain is correct and accessible.` }), { 
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    const { site_id } = await req.json();
+    siteId = site_id;
+
+    if (!siteId) {
+      throw new Error('site_id is required');
     }
 
-    // --- Step 2: Generate summary with Gemini using the fetched content ---
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Server configuration is missing required environment variables.');
+    }
     
-    const prompt = `Based on the following text content from the website '${domain}', provide a concise, one-paragraph summary of what the company does. The summary should be suitable for use as an AI profile for SEO purposes. Focus on the company's main products, services, and target audience. Do not mention that you are summarizing provided text. Just provide the summary directly. For example, for 'nike.com', a good summary would be: 'Nike is a global leader in athletic footwear, apparel, equipment, and accessories...'. Here is the website content: "${websiteText}"`;
-        
-    const response = await ai.models.generateContent({
+    // Create a Supabase client with the service role key to perform admin actions
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // 1. Get the domain from the sites table
+    const { data: siteData, error: fetchError } = await supabaseAdmin
+      .from('sites')
+      .select('domain')
+      .eq('id', siteId)
+      .single();
+
+    if (fetchError || !siteData) {
+        throw new Error(`Could not find site with ID ${siteId}.`);
+    }
+    const domain = siteData.domain;
+
+    // 2. Fetch website content
+    const response = await fetch(`https://${domain}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
+    });
+    if (!response.ok) {
+        throw new Error(`Failed to fetch ${domain}. Status: ${response.status}`);
+    }
+    const html = await response.text();
+    const websiteText = stripHtml(html).substring(0, 8000);
+
+    // 3. Generate summary with Gemini
+    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    const prompt = `Based on the following text content from the website '${domain}', provide a concise, one-paragraph summary of what the company does... Here is the content: "${websiteText}"`;
+    
+    const genAIResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
     });
     
-    const summary = response.text;
+    const summary = genAIResponse.text;
 
-    return new Response(JSON.stringify({ summary }), {
+    // 4. Update the site record with the summary and status
+    const { error: updateError } = await supabaseAdmin
+      .from('sites')
+      .update({ site_profile: summary, site_profile_status: 'completed' })
+      .eq('id', siteId);
+    
+    if (updateError) {
+      throw new Error(`Failed to update site record: ${updateError.message}`);
+    }
+
+    // Return a success response (the client is not waiting for this, but it's good practice)
+    return new Response(JSON.stringify({ success: true, siteId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
+
   } catch (error) {
-    console.error('Error in Supabase function:', error)
+    console.error(`Error in function for siteId ${siteId}:`, error.message);
+
+    // If something fails, update the status to 'failed' so the UI can stop polling
+    if (siteId) {
+        try {
+            const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+            const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+            if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+                 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+                 await supabaseAdmin
+                    .from('sites')
+                    .update({ site_profile_status: 'failed', site_profile: error.message })
+                    .eq('id', siteId);
+            }
+        } catch (updateErr) {
+            console.error('Failed to even update status to failed:', updateErr);
+        }
+    }
+
+    // Return an error response
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   }
-})
+});

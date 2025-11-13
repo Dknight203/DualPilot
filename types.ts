@@ -24,11 +24,15 @@ export interface Site {
     id: string;
     siteName: string;
     domain: string;
-    plan: PlanId;
+    // FIX: Made plan optional and added platform, siteProfile, and siteProfileStatus to align with API responses and fix type errors.
+    plan?: PlanId;
     optimizedPages: number;
     totalPages: number;
     visibilityScore: number;
     refreshPolicy: string;
+    platform?: Platform;
+    siteProfile?: string;
+    siteProfileStatus?: string;
 }
 
 export interface ScanResult {

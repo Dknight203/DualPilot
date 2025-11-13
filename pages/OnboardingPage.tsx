@@ -7,8 +7,8 @@ import StepGscConnect from '../components/onboarding/StepGscConnect';
 import StepIntegrations from '../components/onboarding/StepIntegrations';
 import { useAuth } from '../components/auth/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { PlanId, Platform } from '../types';
-import { getSitePageCount, addSite } from '../services/api';
+import { PlanId, Platform, Site } from '../types';
+import { getSitePageCount, updateSite } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,9 +20,9 @@ const OnboardingPage: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
     
     // State to be collected through the wizard
+    const [siteId, setSiteId] = useState<string | null>(null);
     const [domain, setDomain] = useState<string | null>(null);
     const [platform, setPlatform] = useState<Platform | null>(null);
-    const [siteProfile, setSiteProfile] = useState<string | null>(null);
     const [pageCount, setPageCount] = useState<number | null>(null);
     
     // UI/Flow state
@@ -41,15 +41,22 @@ const OnboardingPage: React.FC = () => {
         }
     };
     
-    const handleDetailsEntered = (enteredDomain: string, selectedPlatform: Platform) => {
-        setDomain(enteredDomain);
-        setPlatform(selectedPlatform);
+    const handleDetailsEntered = (newSite: Site) => {
+        setDomain(newSite.domain);
+        setPlatform(newSite.platform);
+        setSiteId(newSite.id);
         handleNextStep();
     };
     
-    const handleProfileConfirmed = (profile: string) => {
-        setSiteProfile(profile);
-        handleNextStep();
+    const handleProfileConfirmed = async (profile: string) => {
+        if (!siteId) return;
+        try {
+            await updateSite(siteId, { site_profile: profile });
+            handleNextStep();
+        } catch (error) {
+            console.error("Failed to save profile:", error);
+            alert("Could not save your profile. Please try again.");
+        }
     }
     
     // This is called after the "Integrations" step
@@ -73,14 +80,14 @@ const OnboardingPage: React.FC = () => {
     };
 
     const handleOnboardingComplete = async (planId: PlanId) => {
-        if (!domain || !platform || !siteProfile || !user) {
+        if (!siteId || !user) {
             alert("Error: Missing information. Please restart the onboarding process.");
             return;
         }
 
         setIsCreatingSite(true);
         try {
-            await addSite(domain, platform, planId, siteProfile);
+            await updateSite(siteId, { plan: planId });
             await refreshSites();
 
             if (user.email === 'chrisley.ceme@gmail.com') {
@@ -91,14 +98,14 @@ const OnboardingPage: React.FC = () => {
             }
 
         } catch (error) {
-            console.error("Failed to create site in final step:", error);
-            // In a real app, show a toast message
-            alert("Could not create your site. Please try again.");
+            console.error("Failed to update site in final step:", error);
+            alert("Could not save your plan. Please try again.");
             setIsCreatingSite(false);
         }
     };
 
     const handleStepClick = (step: number) => {
+        // Prevent jumping ahead to uncompleted steps
         if (step < currentStep) {
             setCurrentStep(step);
         }
@@ -113,8 +120,8 @@ const OnboardingPage: React.FC = () => {
             case 1:
                 return <StepEnterDomain onDetailsEntered={handleDetailsEntered} />;
             case 2:
-                if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
-                return <StepConfirmProfile domain={domain} onProfileConfirmed={handleProfileConfirmed} onBack={handleBackStep} />;
+                if (!siteId) return <div>Please return to the previous step to enter your domain.</div>;
+                return <StepConfirmProfile siteId={siteId} onProfileConfirmed={handleProfileConfirmed} onBack={handleBackStep} />;
             case 3:
                 return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
             case 4:

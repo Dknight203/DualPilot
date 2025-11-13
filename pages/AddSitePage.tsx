@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSite } from '../components/site/SiteContext';
-import { PlanId, Platform } from '../types';
+import { PlanId, Platform, Site } from '../types';
 import Stepper from '../components/onboarding/Stepper';
 import StepEnterDomain from '../components/onboarding/StepEnterDomain';
 import StepIntegrations from '../components/onboarding/StepIntegrations';
@@ -32,9 +32,10 @@ const AddSitePage: React.FC = () => {
         }
     };
     
-    const handleDetailsEntered = (enteredDomain: string, selectedPlatform: Platform) => {
-        setDomain(enteredDomain);
-        setPlatform(selectedPlatform);
+    // FIX: Changed function signature to accept a single `Site` object to match the prop type of `StepEnterDomain`.
+    const handleDetailsEntered = (newSite: Site) => {
+        setDomain(newSite.domain);
+        setPlatform(newSite.platform || null);
 
         if (activeSite) {
             const siteLimit = activeSite.plan === PlanId.Agency ? 10 : (activeSite.plan === PlanId.Pro ? 2 : 1);
@@ -50,7 +51,7 @@ const AddSitePage: React.FC = () => {
     };
 
     const handleCreateSite = async () => {
-        if (!domain || !platform || !activeSite) {
+        if (!domain || !platform || !activeSite || !activeSite.plan) {
             alert("An error occurred. Missing required information.");
             return;
         }
