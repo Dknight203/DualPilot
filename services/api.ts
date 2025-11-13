@@ -284,8 +284,9 @@ export const generateAiSummary = async (prompt: string): Promise<string> => {
         }
 
         return data.summary || "No summary returned.";
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error generating AI summary:', error);
-        return "An error occurred while generating the summary. Please try again later.";
+        // Return the specific error message from the backend if available, otherwise a generic one.
+        return error?.message || "An error occurred while generating the summary. Please try again later.";
     }
 };

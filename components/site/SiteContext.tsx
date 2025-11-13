@@ -14,23 +14,15 @@ interface SiteContextType {
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 export const SiteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth(); // Depend on the confirmed user object from AuthContext
+  const { user, isAuthenticated } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [activeSite, setActiveSiteState] = useState<Site | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Start as true
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchSites = useCallback(async () => {
-    if (!user) {
-        setSites([]);
-        setActiveSiteState(null);
-        setIsLoading(false);
-        return;
-    };
-
+  const fetchSites = useCallback(async (userId: string) => {
     setIsLoading(true);
     try {
-      // Pass the confirmed user ID to getSites, eliminating the race condition.
-      const userSites = await getSites(user.id);
+      const userSites = await getSites(userId);
       setSites(userSites);
       
       const lastActiveSiteId = localStorage.getItem('activeSiteId');
@@ -45,30 +37,42 @@ export const SiteProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error("Failed to fetch sites", error);
-      // Ensure state is clean on error
       setSites([]);
       setActiveSiteState(null);
     } finally {
       setIsLoading(false);
     }
-  }, [user]); // The dependency on `user` is key to the fix.
+  }, []);
   
   useEffect(() => {
-    fetchSites();
-  }, [fetchSites]);
+    if (isAuthenticated && user) {
+      fetchSites(user.id);
+    } else if (!isAuthenticated) {
+      // If user is logged out, clear all site data
+      setSites([]);
+      setActiveSiteState(null);
+      setIsLoading(false);
+    }
+  }, [user, isAuthenticated, fetchSites]);
 
   const setActiveSite = (site: Site) => {
     localStorage.setItem('activeSiteId', site.id);
     setActiveSiteState(site);
   };
+  
+  const refreshSitesAndState = useCallback(async () => {
+    if (user) {
+        await fetchSites(user.id);
+    }
+  }, [user, fetchSites]);
 
   const value = useMemo(() => ({
     sites,
     activeSite,
     setActiveSite,
     isLoading,
-    refreshSites: fetchSites,
-  }), [sites, activeSite, isLoading, fetchSites]);
+    refreshSites: refreshSitesAndState,
+  }), [sites, activeSite, isLoading, refreshSitesAndState]);
 
   return (
     <SiteContext.Provider value={value}>
