@@ -56,7 +56,7 @@ export const getSites = async (): Promise<Site[]> => {
     }
     
     // Map snake_case from DB to camelCase for the app
-    return data.map(site => ({
+    return (data || []).map(site => ({
         id: site.id,
         siteName: site.site_name,
         domain: site.domain,

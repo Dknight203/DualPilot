@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import WordPressForm from './platforms/WordPressForm';
 import ShopifyForm from './platforms/ShopifyForm';
@@ -7,6 +7,7 @@ import OtherForm from './platforms/OtherForm';
 import { verifyDomain } from '../../services/api';
 import Toast from '../common/Toast';
 import { Platform } from '../../types';
+import { useAuth } from '../auth/AuthContext';
 
 interface StepIntegrationsProps {
     domain: string;
@@ -16,10 +17,22 @@ interface StepIntegrationsProps {
     continueText?: string;
 }
 
+const ADMIN_EMAIL = 'chrisley.ceme@gmail.com';
+
 const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, onNext, onBack, continueText }) => {
+    const { user } = useAuth();
     const [isVerified, setIsVerified] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+    useEffect(() => {
+        // Admin bypass: If the user is the special admin, auto-verify and proceed.
+        if (user?.email === ADMIN_EMAIL) {
+            setIsVerified(true);
+            onNext();
+        }
+    }, [user, onNext]);
+
 
     const handleVerify = async () => {
         setIsVerifying(true);
@@ -38,6 +51,11 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, o
         }
     };
     
+    // If it's the admin, they will be auto-navigated, so we can show a brief loading state.
+    if (user?.email === ADMIN_EMAIL) {
+        return <div className="text-center py-10">Admin account detected. Bypassing integration step...</div>;
+    }
+
     const renderContent = () => {
         let formComponent;
         
