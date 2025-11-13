@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSite } from '../components/site/SiteContext';
-import { PlanId, Platform, Site } from '../types';
+import { PlanId, Platform } from '../types';
 import Stepper from '../components/onboarding/Stepper';
 import StepEnterDomain from '../components/onboarding/StepEnterDomain';
 import StepIntegrations from '../components/onboarding/StepIntegrations';
@@ -32,10 +32,9 @@ const AddSitePage: React.FC = () => {
         }
     };
     
-    // FIX: Changed function signature to accept a single `Site` object to match the prop type of `StepEnterDomain`.
-    const handleDetailsEntered = (newSite: Site) => {
-        setDomain(newSite.domain);
-        setPlatform(newSite.platform || null);
+    const handleDetailsEntered = (newDomain: string, newPlatform: Platform) => {
+        setDomain(newDomain);
+        setPlatform(newPlatform);
 
         if (activeSite) {
             const siteLimit = activeSite.plan === PlanId.Agency ? 10 : (activeSite.plan === PlanId.Pro ? 2 : 1);
@@ -58,7 +57,7 @@ const AddSitePage: React.FC = () => {
         setIsCreating(true);
         try {
             // Re-use existing plan, generate a dummy profile for now
-            const dummyProfile = `Site profile for ${domain}.`;
+            const dummyProfile = `Site profile for ${domain}. This can be edited in your site settings.`;
             await addSite(domain, platform, activeSite.plan, dummyProfile);
             await refreshSites();
             navigate('/dashboard', { state: { toast: { message: `Successfully added ${domain}!`, type: 'success' }}});

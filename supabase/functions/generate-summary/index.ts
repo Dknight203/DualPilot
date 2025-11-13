@@ -3,7 +3,6 @@
 declare var Deno: any;
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // IMPORTANT: You must import the GoogleGenAI module from esm.sh for it to work in Deno
 import { GoogleGenAI } from 'https://esm.sh/@google/genai'
 
@@ -30,94 +29,67 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
   
-  let siteId = '';
   try {
-    const { site_id } = await req.json();
-    siteId = site_id;
-
-    if (!siteId) {
-      throw new Error('site_id is required');
+    const { domain } = await req.json();
+    if (!domain) {
+      throw new Error('domain is required');
     }
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('Server configuration is missing required environment variables.');
+    if (!GEMINI_API_KEY) {
+      throw new Error('Server configuration is missing the GEMINI_API_KEY.');
     }
     
-    // Create a Supabase client with the service role key to perform admin actions
-    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    // Fail-fast timeout for fetching the user's website to avoid hitting platform limits
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500); // 2.5 second timeout
 
-    // 1. Get the domain from the sites table
-    const { data: siteData, error: fetchError } = await supabaseAdmin
-      .from('sites')
-      .select('domain')
-      .eq('id', siteId)
-      .single();
+    let websiteText = '';
+    try {
+      const response = await fetch(`https://${domain}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-    if (fetchError || !siteData) {
-        throw new Error(`Could not find site with ID ${siteId}.`);
+      if (!response.ok) {
+        throw new Error(`Could not access ${domain}. The site returned a status of ${response.status}.`);
+      }
+      const html = await response.text();
+      websiteText = stripHtml(html).substring(0, 8000); // Truncate to a reasonable size for the AI
+    } catch (fetchError) {
+      clearTimeout(timeoutId); // Ensure timeout is cleared on other errors too
+      if (fetchError.name === 'AbortError') {
+        throw new Error(`The website at ${domain} was too slow to respond.`);
+      }
+      throw new Error(`Could not fetch content from ${domain}. Please ensure it's a live, public website.`);
     }
-    const domain = siteData.domain;
 
-    // 2. Fetch website content
-    const response = await fetch(`https://${domain}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
-    });
-    if (!response.ok) {
-        throw new Error(`Failed to fetch ${domain}. Status: ${response.status}`);
-    }
-    const html = await response.text();
-    const websiteText = stripHtml(html).substring(0, 8000);
-
-    // 3. Generate summary with Gemini
+    // Generate summary with Gemini
     const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    const prompt = `Based on the following text content from the website '${domain}', provide a concise, one-paragraph summary of what the company does... Here is the content: "${websiteText}"`;
+    const prompt = `Based on the following text content from the website '${domain}', provide a concise, factual, one-paragraph summary of what the company does. Content: "${websiteText}"`;
     
     const genAIResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [{ parts: [{ text: prompt }] }],
+      model: 'gemini-2.5-flash',
+      contents: [{ parts: [{ text: prompt }] }],
+      config: {
+        systemInstruction: "You are a website analysis expert. Your sole function is to analyze the provided text from a website and provide a concise, factual summary of that company's business. It is critical that you do not mention or describe the tool you are part of. Your summary must be strictly about the external website content provided."
+      }
     });
     
     const summary = genAIResponse.text;
 
-    // 4. Update the site record with the summary and status
-    const { error: updateError } = await supabaseAdmin
-      .from('sites')
-      .update({ site_profile: summary, site_profile_status: 'completed' })
-      .eq('id', siteId);
-    
-    if (updateError) {
-      throw new Error(`Failed to update site record: ${updateError.message}`);
+    if (!summary) {
+      throw new Error("The AI could not generate a summary based on the website's content.");
     }
 
-    // Return a success response (the client is not waiting for this, but it's good practice)
-    return new Response(JSON.stringify({ success: true, siteId }), {
+    // Return a success response with the summary
+    return new Response(JSON.stringify({ summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error(`Error in function for siteId ${siteId}:`, error.message);
-
-    // If something fails, update the status to 'failed' so the UI can stop polling
-    if (siteId) {
-        try {
-            const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-            const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-            if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-                 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-                 await supabaseAdmin
-                    .from('sites')
-                    .update({ site_profile_status: 'failed', site_profile: error.message })
-                    .eq('id', siteId);
-            }
-        } catch (updateErr) {
-            console.error('Failed to even update status to failed:', updateErr);
-        }
-    }
-
+    console.error(`Error in generate-summary function:`, error.message);
     // Return an error response
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import { Platform, Site } from '../../types';
+import { Platform } from '../../types';
 import CustomSelect from '../common/CustomSelect';
-import { createSiteForOnboarding } from '../../services/api';
 import Toast from '../common/Toast';
 
 interface StepEnterDomainProps {
-    onDetailsEntered: (newSite: Site) => void;
+    onDetailsEntered: (domain: string, platform: Platform) => void;
 }
 
 const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) => {
@@ -16,7 +15,6 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
     const [showPlatformSelect, setShowPlatformSelect] = useState(false);
     const [isPlatformSelectOpen, setIsPlatformSelectOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [toast, setToast] = useState<{ message: string; type: 'error' } | null>(null);
 
     const platformOptions = [
         { value: 'wordpress', label: 'WordPress' },
@@ -33,27 +31,18 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const sanitizedDomain = domain.replace(/^(https?:\/\/)?(www\.)?/, "").split('/')[0];
         if (!sanitizedDomain || !platform) return;
         
         setIsSubmitting(true);
-        setToast(null);
-
-        try {
-            const newSite = await createSiteForOnboarding(sanitizedDomain, platform as Platform);
-            onDetailsEntered(newSite);
-        } catch (error) {
-            console.error("Failed to create site:", error);
-            setToast({ message: 'Could not create your site. Please try again.', type: 'error' });
-            setIsSubmitting(false);
-        }
+        // No API call here, just pass data to parent.
+        onDetailsEntered(sanitizedDomain, platform as Platform);
     };
 
     return (
         <div>
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <h2 className="text-2xl font-bold text-center text-slate-900">Let's get started with your site</h2>
             <p className="mt-2 text-center text-slate-600">Enter the primary domain you want to optimize and select its platform.</p>
             

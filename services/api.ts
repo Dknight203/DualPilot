@@ -61,14 +61,12 @@ export const getSites = async (userId: string): Promise<Site[]> => {
         visibilityScore: site.visibility_score || 0,
         refreshPolicy: site.refresh_policy || 'Daily refresh',
         platform: site.platform,
-        // Add new fields for polling
         siteProfile: site.site_profile,
-        siteProfileStatus: site.site_profile_status,
     }));
 };
 
 /**
- * Adds a new site for an existing user (used in AddSitePage).
+ * Adds a new site. This is now the single source of truth for site creation.
  */
 export const addSite = async (
     domain: string,
@@ -88,7 +86,6 @@ export const addSite = async (
         plan: planId,
         site_profile: siteProfile,
         platform: platform, 
-        site_profile_status: 'completed', // Manually added, so it's complete
     };
     
     const { data, error } = await supabase
@@ -112,129 +109,6 @@ export const addSite = async (
         visibilityScore: 0,
         refreshPolicy: 'Daily refresh',
     };
-};
-
-/**
- * Creates a site record and triggers the background summary generation job.
- * Used in the first step of the onboarding flow.
- */
-export const createSiteForOnboarding = async (domain: string, platform: Platform): Promise<Site> => {
-    if (!supabase) throw new Error("Supabase client not initialized.");
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User must be logged in to add a site.");
-
-    // 1. Create the site record with a 'pending' status
-    const newSiteData = {
-        owner_id: user.id,
-        site_name: domain,
-        domain: domain,
-        platform: platform,
-        site_profile_status: 'pending',
-    };
-    
-    const { data, error } = await supabase
-        .from('sites')
-        .insert(newSiteData)
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error creating site record:', error);
-        throw error;
-    }
-
-    // 2. Trigger the background function without waiting for it to complete
-    supabase.functions.invoke('generate-summary', {
-        body: { site_id: data.id },
-    }).catch(invokeError => {
-        // Log the error, but don't block the UI
-        console.error('Failed to invoke generate-summary function:', invokeError);
-    });
-
-    // 3. Return the newly created site object
-    return {
-        id: data.id,
-        siteName: data.site_name,
-        domain: data.domain,
-        plan: data.plan,
-        optimizedPages: 0,
-        totalPages: 0,
-        visibilityScore: 0,
-        refreshPolicy: '',
-        // FIX: Added platform to the returned object to match the Site type and fix consumer component errors.
-        platform: data.platform,
-    };
-};
-
-/**
- * Polls the database until the site profile generation is complete or failed.
- */
-export const pollForSiteProfile = (siteId: string): Promise<Site> => {
-    const MAX_POLLS = 15; // 15 polls * 2 seconds = 30 seconds timeout
-    const POLL_INTERVAL = 2000; // 2 seconds
-
-    return new Promise((resolve, reject) => {
-        let pollCount = 0;
-
-        const poll = async () => {
-            if (pollCount >= MAX_POLLS) {
-                return reject(new Error("Timed out waiting for site profile generation."));
-            }
-
-            try {
-                const { data, error } = await supabase
-                    .from('sites')
-                    .select('*')
-                    .eq('id', siteId)
-                    .single();
-                
-                if (error) throw error;
-                
-                if (data.site_profile_status === 'completed' || data.site_profile_status === 'failed') {
-                    const siteResult: Site = {
-                        id: data.id,
-                        siteName: data.site_name,
-                        domain: data.domain,
-                        plan: data.plan,
-                        optimizedPages: 0,
-                        totalPages: 0,
-                        visibilityScore: 0,
-                        refreshPolicy: '',
-                        platform: data.platform,
-                        siteProfile: data.site_profile || '',
-                        siteProfileStatus: data.site_profile_status,
-                    };
-                    resolve(siteResult);
-                } else {
-                    pollCount++;
-                    setTimeout(poll, POLL_INTERVAL);
-                }
-            } catch (err) {
-                console.error("Polling error:", err);
-                reject(new Error("An error occurred while checking for the site profile."));
-            }
-        };
-
-        poll();
-    });
-};
-
-/**
- * Updates a site record. Used for setting plan and final profile in onboarding.
- */
-export const updateSite = async (siteId: string, updates: Partial<{ plan: PlanId; site_profile: string }>): Promise<void> => {
-    if (!supabase) throw new Error("Supabase client not initialized.");
-
-    const { error } = await supabase
-        .from('sites')
-        .update(updates)
-        .eq('id', siteId);
-    
-    if (error) {
-        console.error('Error updating site:', error);
-        throw error;
-    }
 };
 
 export const updateUserProfile = async (userId: string, data: Partial<{ name: string; avatarUrl: string; email: string }>): Promise<TeamMember> => {
@@ -391,17 +265,19 @@ export const generateAiSummary = async (domain: string): Promise<string> => {
 
         if (error) {
             console.error('Error invoking Supabase function:', error);
-            throw error;
+            throw error; // Let the UI catch this and show a specific message
         }
 
+        // The function itself might return a structured error
         if (data.error) {
             console.error('Error from Supabase function:', data.error);
             throw new Error(data.error);
         }
 
-        return data.summary || "No summary returned.";
+        return data.summary || "The AI could not generate a summary. Please write one manually.";
     } catch (error: any) {
         console.error('Error generating AI summary:', error);
-        return error?.message || "An error occurred while generating the summary. Please try again later.";
+        // Re-throw the error with a clean message for the UI to display
+        throw new Error(error?.message || "An error occurred while generating the summary. Please try again later.");
     }
 };

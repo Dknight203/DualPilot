@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Stepper from '../components/onboarding/Stepper';
 import StepEnterDomain from '../components/onboarding/StepEnterDomain';
 import StepConfirmProfile from '../components/onboarding/StepConfirmProfile';
@@ -7,8 +7,8 @@ import StepGscConnect from '../components/onboarding/StepGscConnect';
 import StepIntegrations from '../components/onboarding/StepIntegrations';
 import { useAuth } from '../components/auth/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { PlanId, Platform, Site } from '../types';
-import { getSitePageCount, updateSite } from '../services/api';
+import { PlanId, Platform } from '../types';
+import { getSitePageCount, addSite } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,10 +19,10 @@ const OnboardingPage: React.FC = () => {
     const steps = ['Your Site', 'Your Profile', 'Connect GSC', 'Integrations', 'Choose Plan'];
     const [currentStep, setCurrentStep] = useState(1);
     
-    // State to be collected through the wizard
-    const [siteId, setSiteId] = useState<string | null>(null);
-    const [domain, setDomain] = useState<string | null>(null);
+    // State to be collected through the wizard, held in memory
+    const [domain, setDomain] = useState('');
     const [platform, setPlatform] = useState<Platform | null>(null);
+    const [siteProfile, setSiteProfile] = useState('');
     const [pageCount, setPageCount] = useState<number | null>(null);
     
     // UI/Flow state
@@ -41,25 +41,17 @@ const OnboardingPage: React.FC = () => {
         }
     };
     
-    const handleDetailsEntered = (newSite: Site) => {
-        setDomain(newSite.domain);
-        setPlatform(newSite.platform);
-        setSiteId(newSite.id);
+    const handleDetailsEntered = (newDomain: string, newPlatform: Platform) => {
+        setDomain(newDomain);
+        setPlatform(newPlatform);
         handleNextStep();
     };
     
-    const handleProfileConfirmed = async (profile: string) => {
-        if (!siteId) return;
-        try {
-            await updateSite(siteId, { site_profile: profile });
-            handleNextStep();
-        } catch (error) {
-            console.error("Failed to save profile:", error);
-            alert("Could not save your profile. Please try again.");
-        }
+    const handleProfileConfirmed = (profile: string) => {
+        setSiteProfile(profile);
+        handleNextStep();
     }
     
-    // This is called after the "Integrations" step
     const handleStartPageScan = () => {
         if (!domain) return;
         setIsScanning(true);
@@ -80,16 +72,17 @@ const OnboardingPage: React.FC = () => {
     };
 
     const handleOnboardingComplete = async (planId: PlanId) => {
-        if (!siteId || !user) {
+        if (!domain || !platform || !siteProfile || !user) {
             alert("Error: Missing information. Please restart the onboarding process.");
             return;
         }
 
         setIsCreatingSite(true);
         try {
-            await updateSite(siteId, { plan: planId });
+            await addSite(domain, platform, planId, siteProfile);
             await refreshSites();
 
+            // Special handling for demo user to show tour vs. checkout
             if (user.email === 'chrisley.ceme@gmail.com') {
                 localStorage.setItem('isFirstLogin', 'true');
                 navigate('/dashboard');
@@ -98,14 +91,13 @@ const OnboardingPage: React.FC = () => {
             }
 
         } catch (error) {
-            console.error("Failed to update site in final step:", error);
-            alert("Could not save your plan. Please try again.");
+            console.error("Failed to create site in final step:", error);
+            alert("Could not save your site. Please try again.");
             setIsCreatingSite(false);
         }
     };
 
     const handleStepClick = (step: number) => {
-        // Prevent jumping ahead to uncompleted steps
         if (step < currentStep) {
             setCurrentStep(step);
         }
@@ -120,8 +112,8 @@ const OnboardingPage: React.FC = () => {
             case 1:
                 return <StepEnterDomain onDetailsEntered={handleDetailsEntered} />;
             case 2:
-                if (!siteId) return <div>Please return to the previous step to enter your domain.</div>;
-                return <StepConfirmProfile siteId={siteId} onProfileConfirmed={handleProfileConfirmed} onBack={handleBackStep} />;
+                if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
+                return <StepConfirmProfile domain={domain} onProfileConfirmed={handleProfileConfirmed} onBack={handleBackStep} />;
             case 3:
                 return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
             case 4:

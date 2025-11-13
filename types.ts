@@ -32,7 +32,6 @@ export interface Site {
     refreshPolicy: string;
     platform?: Platform;
     siteProfile?: string;
-    siteProfileStatus?: string;
 }
 
 export interface ScanResult {
