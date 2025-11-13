@@ -4,7 +4,6 @@ import {
     ApiKey, ReportData, CmsConnection,
     InitialOptimizations, BrandingSettings, Platform
 } from '../types';
-import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../supabaseClient';
 
 
@@ -266,8 +265,27 @@ export const updateBrandingLogo = (logoUrl: string): Promise<BrandingSettings> =
 export const removeBrandingLogo = (): Promise<{ success: boolean }> => simulateApiCall({ success: true });
 export const disconnectSite = (siteId: string): Promise<{ success: boolean }> => simulateApiCall({ success: true });
 
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY || ''});
 export const generateAiSummary = async (prompt: string): Promise<string> => {
-    await new Promise(res => setTimeout(res, 1500));
-    return "This is a mock AI summary based on your prompt.";
+    if (!supabase) throw new Error("Supabase client not initialized.");
+
+    try {
+        const { data, error } = await supabase.functions.invoke('generate-summary', {
+            body: { prompt },
+        });
+
+        if (error) {
+            console.error('Error invoking Supabase function:', error);
+            throw error;
+        }
+
+        if (data.error) {
+            console.error('Error from Supabase function:', data.error);
+            throw new Error(data.error);
+        }
+
+        return data.summary || "No summary returned.";
+    } catch (error) {
+        console.error('Error generating AI summary:', error);
+        return "An error occurred while generating the summary. Please try again later.";
+    }
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Textarea from '../common/Textarea';
+import { generateAiSummary } from '../../services/api';
 
 interface StepConfirmProfileProps {
     domain: string;
@@ -14,13 +15,24 @@ const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ domain, onProfi
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Simulate fetching and generating a summary based on the provided domain
-        setIsLoading(true);
-        setTimeout(() => {
-            const mockSummary = `This site, ${domain}, appears to be a SaaS company providing an automated AI and Search visibility engine. It helps users audit pages, generate AI-ready metadata and schema, and maintain visibility across classic search engines and AI assistants.`;
-            setSummary(mockSummary);
-            setIsLoading(false);
-        }, 2000);
+        const fetchSummary = async () => {
+            setIsLoading(true);
+            const prompt = `Analyze the website at the domain ${domain} and provide a concise, one-paragraph summary of what the company does. The summary should be suitable for use as an AI profile for SEO purposes. Focus on the company's main products, services, and target audience. For example, for 'nike.com', a good summary would be: 'Nike is a global leader in athletic footwear, apparel, equipment, and accessories. It designs, develops, and sells products for a wide variety of sports and fitness activities, catering to athletes at every level as well as consumers seeking an active lifestyle.'`;
+            
+            try {
+                const generatedSummary = await generateAiSummary(prompt);
+                setSummary(generatedSummary);
+            } catch (error) {
+                console.error("Failed to generate summary:", error);
+                setSummary(`Failed to generate a summary for ${domain}. Please write one manually.`);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (domain) {
+            fetchSummary();
+        }
     }, [domain]);
 
     const handleSubmit = (e: React.FormEvent) => {
