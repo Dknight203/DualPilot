@@ -52,6 +52,9 @@ serve(async (req) => {
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          tools: [{googleSearch: {}}],
+        },
     });
     
     const summary = response.text;
