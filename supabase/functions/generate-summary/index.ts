@@ -51,7 +51,7 @@ serve(async (req) => {
     
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: [{ parts: [{ text: prompt }] }],
     });
     
     const summary = response.text;
