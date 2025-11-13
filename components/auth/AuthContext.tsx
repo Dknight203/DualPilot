@@ -31,9 +31,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .eq('id', supabaseUser.id)
       .single();
 
-    if (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
+    if (error || !profile) {
+      console.error('Error fetching user profile or profile not found:', error);
+      // Fallback: create a user object from the auth data if profile is missing.
+      // This prevents the app from crashing for new users.
+      return {
+        id: supabaseUser.id,
+        name: supabaseUser.email || 'New User',
+        email: supabaseUser.email || '',
+        role: 'Admin', // Default role
+        status: 'Active',
+        avatarUrl: undefined,
+      } as TeamMember;
     }
     
     // In a real app, role would come from team_memberships, but for now we'll default it.
