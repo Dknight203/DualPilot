@@ -13,7 +13,7 @@ const AddSitePage: React.FC = () => {
     const { sites, activeSite, refreshSites } = useSite();
     const navigate = useNavigate();
 
-    const steps = ['Add Site', 'Integrations', 'Finish'];
+    const steps = ['Add Site', 'Integrations'];
     const [currentStep, setCurrentStep] = useState(1);
     const [domain, setDomain] = useState<string | null>(null);
     const [platform, setPlatform] = useState<Platform | null>(null);
@@ -44,6 +44,7 @@ const AddSitePage: React.FC = () => {
                 handleNextStep();
             }
         } else {
+            // Should not happen if coming from settings, but as a fallback
             handleNextStep();
         }
     };
@@ -70,14 +71,12 @@ const AddSitePage: React.FC = () => {
         if (step < currentStep) {
             if (showUpgradePrompt) {
                 setShowUpgradePrompt(false);
-                setCurrentStep(1);
-            } else {
-                setCurrentStep(step);
             }
+            setCurrentStep(step);
         }
     }
     
-    const renderStep = () => {
+    const renderContent = () => {
         if (showUpgradePrompt) {
             return <UpgradeForMoreSites />;
         }
@@ -92,9 +91,6 @@ const AddSitePage: React.FC = () => {
             case 2:
                 if (!domain || !platform) return <div>Please return to the previous step to enter your domain.</div>;
                 return <StepIntegrations domain={domain} platform={platform} onNext={handleCreateSite} onBack={handleBackStep} />;
-            case 3:
-                // This step is now just a placeholder as creation happens in step 2
-                return <div className="text-center">Redirecting...</div>
             default:
                 return <div>Loading flow...</div>;
         }
@@ -107,7 +103,7 @@ const AddSitePage: React.FC = () => {
                     <Stepper steps={steps} currentStep={currentStep - 1} onStepClick={handleStepClick} />
                 </div>
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-                   {renderStep()}
+                   {renderContent()}
                 </div>
             </div>
         </div>
