@@ -16,16 +16,16 @@ const StepPlan: React.FC<StepPlanProps> = ({ user, onPlanSelected, onBack }) => 
 
     const handleSelectPlan = async (planId: PlanId) => {
         // If user is the admin, bypass payment and just continue the flow.
-        // The site will be created at the end of the onboarding process.
         if (user.email === ADMIN_EMAIL) {
             // Force the Agency plan to give the admin full access
             onPlanSelected(PlanId.Agency);
         } else {
-            // For regular users, since Stripe is not integrated, show a message.
             if (planId === PlanId.Enterprise) {
                  alert('Please contact sales to learn more about our Enterprise plan.');
             } else {
-                 alert('Online checkout is coming soon! For now, only admin accounts can be created through this flow.');
+                 // For regular users, save their choice and continue the onboarding flow.
+                 // Payment will be handled at the end.
+                 onPlanSelected(planId as PlanId);
             }
         }
     };

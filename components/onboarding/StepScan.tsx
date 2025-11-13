@@ -7,6 +7,7 @@ import { Platform } from './StepIntegrations';
 import { addSite } from '../../services/api';
 import { useSite } from '../site/SiteContext';
 import ErrorState from '../common/ErrorState';
+import { useAuth } from '../auth/AuthContext';
 
 
 interface StepScanProps {
@@ -44,6 +45,7 @@ const StepScan: React.FC<StepScanProps> = ({ domain, platform, siteProfile, plan
     const [creationStatus, setCreationStatus] = useState<'pending' | 'creating' | 'created' | 'failed'>('pending');
     const navigate = useNavigate();
     const { refreshSites } = useSite();
+    const { user } = useAuth();
     
     const createSite = async () => {
         setCreationStatus('creating');
@@ -82,9 +84,15 @@ const StepScan: React.FC<StepScanProps> = ({ domain, platform, siteProfile, plan
     }, [creationStatus]);
 
     const handleGoToDashboard = () => {
-        // This flag will trigger the welcome modal on the dashboard for new users
-        localStorage.setItem('isFirstLogin', 'true');
-        navigate('/dashboard');
+        // For the admin, go directly to the dashboard.
+        if (user?.email === 'chrisley.ceme@gmail.com') {
+            localStorage.setItem('isFirstLogin', 'true');
+            navigate('/dashboard');
+        } else {
+            // For regular users, go to the checkout page to complete payment.
+            // The newly created site is already the active one in the context.
+            navigate('/checkout');
+        }
     };
 
     if (creationStatus === 'pending' || creationStatus === 'creating') {
@@ -123,7 +131,7 @@ const StepScan: React.FC<StepScanProps> = ({ domain, platform, siteProfile, plan
             <p className="mt-2 text-slate-600">Your site has been analyzed. Let's head to your dashboard to see the results.</p>
             <div className="mt-6">
                 <Button onClick={handleGoToDashboard} size="lg">
-                    Go to Dashboard
+                    {user?.email === 'chrisley.ceme@gmail.com' ? 'Go to Dashboard' : 'Proceed to Checkout'}
                 </Button>
             </div>
         </div>

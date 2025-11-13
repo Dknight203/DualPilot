@@ -33,6 +33,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import LegalPage from './pages/LegalPage';
 import AddSitePage from './pages/AddSitePage';
+import CheckoutPage from './pages/CheckoutPage';
 
 // Placeholder content for legal pages
 const termsContent = (
@@ -93,6 +94,7 @@ const App: React.FC = () => {
               <Route element={<DashboardLayout />}>
                 <Route path="onboarding" element={<OnboardingPage />} />
                 <Route path="add-site" element={<AddSitePage />} />
+                <Route path="checkout" element={<CheckoutPage />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="dashboard/ai-visibility" element={<AiVisibilityPage />} />
                 <Route path="dashboard/reports" element={<ReportsPage />} />
