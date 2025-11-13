@@ -53,6 +53,7 @@ serve(async (req) => {
         model: 'gemini-2.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
+          systemInstruction: "You are a website analysis expert. Your sole function is to analyze a given website domain and provide a concise, factual summary of the company's business. Do not mention yourself, AI, or the tool you are a part of. Focus only on the external website provided in the prompt.",
           tools: [{googleSearch: {}}],
         },
     });
