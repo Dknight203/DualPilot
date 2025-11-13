@@ -67,6 +67,9 @@ const StepEnterDomain: React.FC<StepEnterDomainProps> = ({ onDetailsEntered }) =
                             placeholder="Select your platform..."
                             onOpenChange={setIsPlatformSelectOpen}
                         />
+                        <p className="text-xs text-slate-500 mt-2 text-center">
+                            If your site is a SaaS tool or your platform isn't listed, please select 'Other / Custom'.
+                        </p>
                     </div>
                 )}
 

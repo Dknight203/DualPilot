@@ -3,7 +3,7 @@ import Button from '../common/Button';
 import WordPressForm from './platforms/WordPressForm';
 import ShopifyForm from './platforms/ShopifyForm';
 import WebflowForm from './platforms/WebflowForm';
-import OtherForm from './platforms/OtherForm';
+import CustomIntegrationForm from './platforms/CustomIntegrationForm';
 import { verifyDomain } from '../../services/api';
 import Toast from '../common/Toast';
 import { Platform } from '../../types';
@@ -70,25 +70,33 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, o
                 formComponent = <WebflowForm onConnected={() => setIsVerified(true)} />;
                 break;
             case 'other':
-            case 'squarespace': // Fallback for now
-                formComponent = <OtherForm onVerify={handleVerify} isVerifying={isVerifying} isVerified={isVerified} />;
+            case 'squarespace':
+                formComponent = <CustomIntegrationForm onVerify={handleVerify} isVerifying={isVerifying} isVerified={isVerified} onAcknowledge={onNext} />;
                 break;
             default:
                 formComponent = <p>Something went wrong.</p>;
         }
 
+        const showMainControls = platform !== 'other' && platform !== 'squarespace';
+
         return (
             <div>
                 {formComponent}
-                <div className="mt-10 text-center flex justify-center gap-4">
-                     <Button onClick={onBack} variant="outline" size="lg">
-                        Back
-                    </Button>
-                    <Button onClick={onNext} size="lg" disabled={!isVerified}>
-                        {continueText || 'Continue'}
-                    </Button>
+                {showMainControls && (
+                    <div className="mt-10 text-center flex justify-center gap-4">
+                        <Button onClick={onBack} variant="outline" size="lg">
+                            Back
+                        </Button>
+                        <Button onClick={onNext} size="lg" disabled={!isVerified}>
+                            {continueText || 'Continue'}
+                        </Button>
+                    </div>
+                )}
+                 <div className="mt-8 text-center">
+                    <button onClick={onBack} className="text-sm font-medium text-slate-500 hover:text-slate-700 hover:underline">
+                        &larr; Back
+                    </button>
                 </div>
-                 <p className="text-xs text-slate-500 mt-2 text-center">A successful connection is required to continue.</p>
             </div>
         );
     };
