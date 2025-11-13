@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { PlanId } from '../../types';
+import { Platform } from './StepIntegrations';
+import { addSite } from '../../services/api';
+import { useSite } from '../site/SiteContext';
+import ErrorState from '../common/ErrorState';
 
+
+interface StepScanProps {
+    domain: string;
+    platform: Platform;
+    siteProfile: string;
+    planId: PlanId;
+}
 
 const StatusItem: React.FC<{ text: string; status: 'pending' | 'active' | 'complete' }> = ({ text, status }) => {
     const getStatusIcon = () => {
@@ -27,11 +39,33 @@ const StatusItem: React.FC<{ text: string; status: 'pending' | 'active' | 'compl
     );
 }
 
-const StepScan: React.FC = () => {
+const StepScan: React.FC<StepScanProps> = ({ domain, platform, siteProfile, planId }) => {
     const [scanProgress, setScanProgress] = useState(0);
+    const [creationStatus, setCreationStatus] = useState<'pending' | 'creating' | 'created' | 'failed'>('pending');
     const navigate = useNavigate();
+    const { refreshSites } = useSite();
     
+    const createSite = async () => {
+        setCreationStatus('creating');
+        try {
+            await addSite(domain, platform, planId, siteProfile);
+            await refreshSites();
+            setCreationStatus('created');
+        } catch (error) {
+            console.error("Failed to create site in final step:", error);
+            setCreationStatus('failed');
+        }
+    };
+
+    // Create the site when the component mounts
     useEffect(() => {
+        createSite();
+    }, []);
+
+    // Start the scan animation only after the site has been successfully created
+    useEffect(() => {
+        if (creationStatus !== 'created') return;
+
         const stages = [25, 60, 90, 100]; // Simulate progress percentages for each stage
         let currentStage = 0;
         
@@ -45,13 +79,34 @@ const StepScan: React.FC = () => {
         }, 1500);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [creationStatus]);
 
     const handleGoToDashboard = () => {
         // This flag will trigger the welcome modal on the dashboard for new users
         localStorage.setItem('isFirstLogin', 'true');
         navigate('/dashboard');
     };
+
+    if (creationStatus === 'pending' || creationStatus === 'creating') {
+        return (
+             <div className="text-center py-8">
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Finalizing Setup</h2>
+                <div className="flex justify-center">
+                    <LoadingSpinner text="Creating your site in DualPilot..." />
+                </div>
+            </div>
+        )
+    }
+
+    if (creationStatus === 'failed') {
+        return (
+            <ErrorState
+                title="Site Creation Failed"
+                message="We were unable to create your site. Please go back and try again."
+                onRetry={createSite}
+            />
+        )
+    }
     
     const renderScanProgress = () => (
         <div className="max-w-md mx-auto space-y-6">

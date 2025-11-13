@@ -89,6 +89,7 @@ export const addSite = async (
         domain: domain,
         plan: planId,
         site_profile: siteProfile,
+        platform: platform, // Add the platform to the data being inserted
     };
     
     const { data, error } = await supabase

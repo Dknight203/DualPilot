@@ -8,6 +8,7 @@ import StepIntegrations, { Platform } from '../components/onboarding/StepIntegra
 import StepScan from '../components/onboarding/StepScan';
 import { useAuth } from '../components/auth/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { PlanId } from '../types';
 
 const OnboardingPage: React.FC = () => {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ const OnboardingPage: React.FC = () => {
     const [domain, setDomain] = useState<string | null>(null);
     const [platform, setPlatform] = useState<Platform | null>(null);
     const [siteProfile, setSiteProfile] = useState<string | null>(null);
+    const [planId, setPlanId] = useState<PlanId | null>(null);
 
     const handleNextStep = () => {
         if (currentStep < steps.length) {
@@ -42,6 +44,11 @@ const OnboardingPage: React.FC = () => {
         handleNextStep();
     }
 
+    const handlePlanSelected = (selectedPlanId: PlanId) => {
+        setPlanId(selectedPlanId);
+        handleNextStep();
+    };
+
     const handleStepClick = (step: number) => {
         if (step < currentStep) {
             setCurrentStep(step);
@@ -60,15 +67,17 @@ const OnboardingPage: React.FC = () => {
                 if (!domain) return <div>Please return to the previous step to enter your domain.</div>;
                 return <StepConfirmProfile domain={domain} onProfileConfirmed={handleProfileConfirmed} onBack={handleBackStep} />;
             case 3:
-                if (!domain || !platform || !siteProfile) return <div>Please complete previous steps.</div>
-                return <StepPlan user={user} domain={domain} platform={platform} siteProfile={siteProfile} onPlanSelected={handleNextStep} onBack={handleBackStep} />;
+                return <StepPlan user={user} onPlanSelected={handlePlanSelected} onBack={handleBackStep} />;
             case 4:
                 return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
             case 5:
                  if (!domain || !platform) return <div>Please return to a previous step to enter your site details.</div>;
                 return <StepIntegrations domain={domain} platform={platform} onNext={handleNextStep} onBack={handleBackStep} />;
             case 6:
-                return <StepScan />;
+                if (!domain || !platform || !siteProfile || !planId) {
+                    return <div>Please complete all previous steps.</div>;
+                }
+                return <StepScan domain={domain} platform={platform} siteProfile={siteProfile} planId={planId} />;
             default:
                 return <div>Unknown Step</div>;
         }
