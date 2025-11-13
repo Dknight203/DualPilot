@@ -6,6 +6,14 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 // IMPORTANT: You must import the GoogleGenAI module from esm.sh for it to work in Deno
 import { GoogleGenAI } from 'https://esm.sh/@google/genai'
 
+// --- CORS HEADERS ---
+// This is crucial for allowing your Vercel frontend to call this function.
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
 // This function will read the GEMINI_API_KEY from your Supabase Project's Environment Variables
 // Go to your Supabase Project > Settings > Functions and add GEMINI_API_KEY
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')
@@ -22,14 +30,9 @@ function stripHtml(html: string): string {
 
 // This is the main function that will be executed when the edge function is invoked
 serve(async (req) => {
-  // This is needed to handle CORS requests from the browser
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        'Access-Control-Allow-Origin': '*', // Or your specific Vercel domain for better security
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
-    })
+    return new Response('ok', { headers: corsHeaders })
   }
   
   try {
@@ -37,11 +40,7 @@ serve(async (req) => {
     if (!domain) {
       return new Response(JSON.stringify({ error: 'Domain is required' }), {
         status: 400,
-        headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
     
@@ -49,11 +48,7 @@ serve(async (req) => {
       console.error("GEMINI_API_KEY environment variable not set in Supabase project settings.")
       return new Response(JSON.stringify({ error: 'The server is not configured correctly.' }), {
         status: 500,
-        headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
     
@@ -76,11 +71,7 @@ serve(async (req) => {
         console.error(`Error fetching content for ${domain}:`, fetchError);
         return new Response(JSON.stringify({ error: `Could not retrieve content from ${domain}. Please ensure the domain is correct and accessible.` }), { 
             status: 500,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-            },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
 
@@ -97,21 +88,13 @@ serve(async (req) => {
     const summary = response.text;
 
     return new Response(JSON.stringify({ summary }), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Error in Supabase function:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
