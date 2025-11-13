@@ -17,10 +17,10 @@ const StepConfirmProfile: React.FC<StepConfirmProfileProps> = ({ domain, onProfi
     useEffect(() => {
         const fetchSummary = async () => {
             setIsLoading(true);
-            const prompt = `Analyze the website at the domain ${domain} and provide a concise, one-paragraph summary of what the company does. The summary should be suitable for use as an AI profile for SEO purposes. Focus on the company's main products, services, and target audience. For example, for 'nike.com', a good summary would be: 'Nike is a global leader in athletic footwear, apparel, equipment, and accessories. It designs, develops, and sells products for a wide variety of sports and fitness activities, catering to athletes at every level as well as consumers seeking an active lifestyle.'`;
-            
             try {
-                const generatedSummary = await generateAiSummary(prompt);
+                // The backend now handles fetching content and prompt creation.
+                // We just need to send the domain.
+                const generatedSummary = await generateAiSummary(domain);
                 setSummary(generatedSummary);
             } catch (error) {
                 console.error("Failed to generate summary:", error);

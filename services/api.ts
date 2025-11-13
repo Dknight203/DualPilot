@@ -265,12 +265,12 @@ export const updateBrandingLogo = (logoUrl: string): Promise<BrandingSettings> =
 export const removeBrandingLogo = (): Promise<{ success: boolean }> => simulateApiCall({ success: true });
 export const disconnectSite = (siteId: string): Promise<{ success: boolean }> => simulateApiCall({ success: true });
 
-export const generateAiSummary = async (prompt: string): Promise<string> => {
+export const generateAiSummary = async (domain: string): Promise<string> => {
     if (!supabase) throw new Error("Supabase client not initialized.");
 
     try {
         const { data, error } = await supabase.functions.invoke('generate-summary', {
-            body: { prompt },
+            body: { domain },
         });
 
         if (error) {
