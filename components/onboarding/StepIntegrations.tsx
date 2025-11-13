@@ -6,17 +6,17 @@ import WebflowForm from './platforms/WebflowForm';
 import OtherForm from './platforms/OtherForm';
 import { verifyDomain } from '../../services/api';
 import Toast from '../common/Toast';
-
-export type Platform = 'wordpress' | 'shopify' | 'webflow' | 'squarespace' | 'other';
+import { Platform } from '../../types';
 
 interface StepIntegrationsProps {
     domain: string;
     platform: Platform;
     onNext: () => void;
     onBack: () => void;
+    continueText?: string;
 }
 
-const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, onNext, onBack }) => {
+const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, onNext, onBack, continueText }) => {
     const [isVerified, setIsVerified] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -67,7 +67,7 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, o
                         Back
                     </Button>
                     <Button onClick={onNext} size="lg" disabled={!isVerified}>
-                        Continue to Final Scan
+                        {continueText || 'Continue'}
                     </Button>
                 </div>
                  <p className="text-xs text-slate-500 mt-2 text-center">A successful connection is required to continue.</p>

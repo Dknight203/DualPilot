@@ -5,7 +5,7 @@ import WordPressForm from '../../components/onboarding/platforms/WordPressForm';
 import ShopifyForm from '../../components/onboarding/platforms/ShopifyForm';
 import WebflowForm from '../../components/onboarding/platforms/WebflowForm';
 import OtherForm from '../../components/onboarding/platforms/OtherForm';
-import { Platform } from '../../components/onboarding/StepIntegrations';
+import { Platform } from '../../types';
 
 const IntegrationsSettings: React.FC = () => {
     const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null);

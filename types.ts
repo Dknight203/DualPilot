@@ -7,6 +7,8 @@ export enum PlanId {
     Enterprise = 'enterprise',
 }
 
+export type Platform = 'wordpress' | 'shopify' | 'webflow' | 'squarespace' | 'other';
+
 export interface Plan {
     id: PlanId;
     name: string;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Platform } from '../StepIntegrations';
+// FIX: The 'Platform' type was incorrectly imported from '../StepIntegrations', which is a component file and does not export this type. This change corrects the import path to reference 'types.ts' where the 'Platform' type is properly defined and exported.
+import { Platform } from '../../../types';
 
 interface PlatformCardProps {
     name: string;

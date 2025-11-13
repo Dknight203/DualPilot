@@ -2,11 +2,10 @@ import {
     ScanResult, Site, PlanId, Page, PageStatus, LineChartData, StackedBarChartData,
     PieChartData, Event, ImprovedPage, PageDetails, PageOutput, Invoice, TeamMember,
     ApiKey, ReportData, CmsConnection,
-    InitialOptimizations, BrandingSettings
+    InitialOptimizations, BrandingSettings, Platform
 } from '../types';
 import { GoogleGenAI } from '@google/genai';
 import { supabase } from '../supabaseClient';
-import { Platform } from '../components/onboarding/StepIntegrations';
 
 
 // --- MOCK DATA (for features not yet connected to backend) ---

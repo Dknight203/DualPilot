@@ -4,10 +4,10 @@ import StepEnterDomain from '../components/onboarding/StepEnterDomain';
 import StepConfirmProfile from '../components/onboarding/StepConfirmProfile';
 import StepPlan from '../components/onboarding/StepPlan';
 import StepGscConnect from '../components/onboarding/StepGscConnect';
-import StepIntegrations, { Platform } from '../components/onboarding/StepIntegrations';
+import StepIntegrations from '../components/onboarding/StepIntegrations';
 import { useAuth } from '../components/auth/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { PlanId } from '../types';
+import { PlanId, Platform } from '../types';
 import { getSitePageCount, addSite } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
 import { useNavigate } from 'react-router-dom';
@@ -119,7 +119,7 @@ const OnboardingPage: React.FC = () => {
                 return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
             case 4:
                 if (!domain || !platform) return <div>Please return to a previous step to enter your site details.</div>;
-                return <StepIntegrations domain={domain} platform={platform} onNext={handleStartPageScan} onBack={handleBackStep} />;
+                return <StepIntegrations domain={domain} platform={platform} onNext={handleStartPageScan} onBack={handleBackStep} continueText="Analyze Site & Continue" />;
             case 5:
                 if (isScanning) {
                     return <div className="h-64 flex justify-center items-center"><LoadingSpinner text="Analyzing your site to recommend a plan..." /></div>;

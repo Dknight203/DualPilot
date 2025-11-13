@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Button from '../common/Button';
 import Input from '../common/Input';
-import { Platform } from './StepIntegrations';
+import { Platform } from '../../types';
 import CustomSelect from '../common/CustomSelect';
 
 interface StepEnterDomainProps {

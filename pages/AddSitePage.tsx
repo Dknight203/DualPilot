@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useSite } from '../components/site/SiteContext';
-import { PlanId } from '../types';
+import { PlanId, Platform } from '../types';
 import Stepper from '../components/onboarding/Stepper';
 import StepEnterDomain from '../components/onboarding/StepEnterDomain';
-import StepIntegrations, { Platform } from '../components/onboarding/StepIntegrations';
+import StepIntegrations from '../components/onboarding/StepIntegrations';
 import UpgradeForMoreSites from '../components/onboarding/UpgradeForMoreSites';
 import { useNavigate } from 'react-router-dom';
 import { addSite } from '../services/api';
@@ -90,7 +90,7 @@ const AddSitePage: React.FC = () => {
                 return <StepEnterDomain onDetailsEntered={handleDetailsEntered} />;
             case 2:
                 if (!domain || !platform) return <div>Please return to the previous step to enter your domain.</div>;
-                return <StepIntegrations domain={domain} platform={platform} onNext={handleCreateSite} onBack={handleBackStep} />;
+                return <StepIntegrations domain={domain} platform={platform} onNext={handleCreateSite} onBack={handleBackStep} continueText="Finish & Create Site" />;
             default:
                 return <div>Loading flow...</div>;
         }
