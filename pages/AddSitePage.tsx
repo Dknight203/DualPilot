@@ -58,7 +58,7 @@ const AddSitePage: React.FC = () => {
         try {
             // Re-use existing plan, generate a dummy profile for now
             const dummyProfile = `Site profile for ${domain}. This can be edited in your site settings.`;
-            await addSite(domain, platform, activeSite.plan, dummyProfile);
+            await addSite(domain, platform, activeSite.plan, dummyProfile, 0);
             await refreshSites();
             navigate('/dashboard', { state: { toast: { message: `Successfully added ${domain}!`, type: 'success' }}});
         } catch (error) {

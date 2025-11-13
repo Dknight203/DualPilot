@@ -8,7 +8,7 @@ import StepIntegrations from '../components/onboarding/StepIntegrations';
 import { useAuth } from '../components/auth/AuthContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { PlanId, Platform } from '../types';
-import { getSitePageCount, addSite } from '../services/api';
+import { addSite } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,10 +23,8 @@ const OnboardingPage: React.FC = () => {
     const [domain, setDomain] = useState('');
     const [platform, setPlatform] = useState<Platform | null>(null);
     const [siteProfile, setSiteProfile] = useState('');
-    const [pageCount, setPageCount] = useState<number | null>(null);
     
     // UI/Flow state
-    const [isScanning, setIsScanning] = useState(false);
     const [isCreatingSite, setIsCreatingSite] = useState(false);
 
     const handleNextStep = () => {
@@ -51,25 +49,6 @@ const OnboardingPage: React.FC = () => {
         setSiteProfile(profile);
         handleNextStep();
     }
-    
-    const handleStartPageScan = () => {
-        if (!domain) return;
-        setIsScanning(true);
-        handleNextStep(); // Move to the final step's container
-        
-        const fetchPageCount = async () => {
-            try {
-                const count = await getSitePageCount(domain);
-                setPageCount(count);
-            } catch (error) {
-                console.error("Failed to fetch page count", error);
-                setPageCount(0); // Default to 0 on error
-            } finally {
-                setIsScanning(false);
-            }
-        };
-        fetchPageCount();
-    };
 
     const handleOnboardingComplete = async (planId: PlanId) => {
         if (!domain || !platform || !siteProfile || !user) {
@@ -79,7 +58,8 @@ const OnboardingPage: React.FC = () => {
 
         setIsCreatingSite(true);
         try {
-            await addSite(domain, platform, planId, siteProfile);
+            // Save site with an initial page count of 0. The real scan will happen post-creation.
+            await addSite(domain, platform, planId, siteProfile, 0);
             await refreshSites();
 
             // Special handling for demo user to show tour vs. checkout
@@ -118,15 +98,11 @@ const OnboardingPage: React.FC = () => {
                 return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
             case 4:
                 if (!domain || !platform) return <div>Please return to a previous step to enter your site details.</div>;
-                return <StepIntegrations domain={domain} platform={platform} onNext={handleStartPageScan} onBack={handleBackStep} continueText="Analyze Site & Continue" />;
+                // Directly proceed to the next step (plan selection)
+                return <StepIntegrations domain={domain} platform={platform} onNext={handleNextStep} onBack={handleBackStep} />;
             case 5:
-                if (isScanning) {
-                    return <div className="h-64 flex justify-center items-center"><LoadingSpinner text="Analyzing your site to recommend a plan..." /></div>;
-                }
-                if (pageCount === null) return <div>Please complete previous steps.</div>;
                 return <StepPlan 
                             user={user} 
-                            pageCount={pageCount}
                             onConfirm={handleOnboardingComplete} 
                             onBack={handleBackStep} 
                             isCreating={isCreatingSite}

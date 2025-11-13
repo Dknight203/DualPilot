@@ -72,7 +72,8 @@ export const addSite = async (
     domain: string,
     platform: Platform,
     planId: PlanId,
-    siteProfile: string
+    siteProfile: string,
+    totalPages: number,
 ): Promise<Site> => {
     if (!supabase) throw new Error("Supabase client not initialized.");
     
@@ -85,7 +86,8 @@ export const addSite = async (
         domain: domain,
         plan: planId,
         site_profile: siteProfile,
-        platform: platform, 
+        platform: platform,
+        total_pages: totalPages,
     };
     
     const { data, error } = await supabase
@@ -104,10 +106,12 @@ export const addSite = async (
         siteName: data.site_name,
         domain: data.domain,
         plan: data.plan,
-        optimizedPages: 0,
-        totalPages: 0,
-        visibilityScore: 0,
-        refreshPolicy: 'Daily refresh',
+        optimizedPages: data.optimized_pages || 0,
+        totalPages: data.total_pages || 0,
+        visibilityScore: data.visibility_score || 0,
+        refreshPolicy: data.refresh_policy || 'Daily refresh',
+        platform: data.platform,
+        siteProfile: data.site_profile,
     };
 };
 
@@ -172,11 +176,6 @@ export const changePassword = async (userId: string, currentPassword: string, ne
 
 
 // --- MOCK FUNCTIONS (to be replaced) ---
-
-export const getSitePageCount = async (domain: string): Promise<number> => {
-    await new Promise(res => setTimeout(res, 2500));
-    return Math.floor(Math.random() * 500) + 10;
-};
 
 export const scanDomain = (domain: string): Promise<ScanResult> => {
     const score = Math.floor(Math.random() * (95 - 60 + 1) + 60);
