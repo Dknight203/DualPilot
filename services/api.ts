@@ -35,20 +35,16 @@ const simulateApiCall = <T>(data: T, delay = 500): Promise<T> => {
 // --- REAL API FUNCTIONS ---
 
 /**
- * Fetches all sites belonging to the currently authenticated user.
+ * Fetches all sites belonging to a specific user.
  */
-export const getSites = async (): Promise<Site[]> => {
+export const getSites = async (userId: string): Promise<Site[]> => {
     if (!supabase) throw new Error("Supabase client not initialized.");
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-        return []; // No user logged in, return no sites
-    }
+    if (!userId) return []; // If no user ID is provided, there are no sites.
     
     const { data, error } = await supabase
         .from('sites')
         .select('*')
-        .eq('owner_id', session.user.id);
+        .eq('owner_id', userId);
 
     if (error) {
         console.error('Error fetching sites:', error);

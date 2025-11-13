@@ -14,20 +14,30 @@ interface SiteContextType {
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 export const SiteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth(); // Depend on the confirmed user object from AuthContext
   const [sites, setSites] = useState<Site[]>([]);
   const [activeSite, setActiveSiteState] = useState<Site | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as true
 
   const fetchSites = useCallback(async () => {
+    if (!user) {
+        setSites([]);
+        setActiveSiteState(null);
+        setIsLoading(false);
+        return;
+    };
+
     setIsLoading(true);
     try {
-      const userSites = await getSites();
+      // Pass the confirmed user ID to getSites, eliminating the race condition.
+      const userSites = await getSites(user.id);
       setSites(userSites);
-      // Set the first site as active by default, or from localStorage
+      
       const lastActiveSiteId = localStorage.getItem('activeSiteId');
       const siteToActivate = userSites.find(s => s.id === lastActiveSiteId) || userSites[0] || null;
+      
       setActiveSiteState(siteToActivate);
+
       if (siteToActivate) {
           localStorage.setItem('activeSiteId', siteToActivate.id);
       } else {
@@ -35,22 +45,17 @@ export const SiteProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     } catch (error) {
       console.error("Failed to fetch sites", error);
+      // Ensure state is clean on error
+      setSites([]);
+      setActiveSiteState(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user]); // The dependency on `user` is key to the fix.
   
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchSites();
-    } else {
-      // Clear data if not authenticated
-      setSites([]);
-      setActiveSiteState(null);
-      localStorage.removeItem('activeSiteId');
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, fetchSites]);
+    fetchSites();
+  }, [fetchSites]);
 
   const setActiveSite = (site: Site) => {
     localStorage.setItem('activeSiteId', site.id);
