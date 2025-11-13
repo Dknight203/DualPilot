@@ -21,6 +21,7 @@ import WelcomeModal from '../components/dashboard/WelcomeModal';
 import { dashboardTourSteps } from '../data/tourSteps';
 import ConnectGscPrompt from '../components/dashboard/reports/ConnectGscPrompt';
 import GscConnectModal from '../components/dashboard/reports/GscConnectModal';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const DashboardPage: React.FC = () => {
     const { activeSite, sites } = useSite();
@@ -209,6 +210,9 @@ const DashboardPage: React.FC = () => {
     if (!dashboardData || !pages) {
         return <div className="text-center py-20">Please select a site to view the dashboard.</div>;
     }
+    
+    // Special state for brand new sites that haven't been scanned yet.
+    const isNewSite = dashboardData.site.totalPages === 0;
 
     return (
         <>
@@ -226,60 +230,69 @@ const DashboardPage: React.FC = () => {
                             <Button variant="outline">View Reports</Button>
                         </Link>
                     </div>
-                    
-                    <div id="stat-cards-container">
-                        <StatCards site={dashboardData.site} />
-                    </div>
-    
-                    <div className="mt-8" id="top-pages-container">
-                        <TopImprovedPages pages={dashboardData.topImprovedPages} />
-                    </div>
-    
-                    <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card title="Visibility Score Trend (30 Days)" className="lg:col-span-2" id="visibility-chart-card">
-                           {isGscConnected ? (
-                                <ChartLineVisibility data={dashboardData.charts.visibilityTrend} />
-                            ) : (
-                                <div className="p-6">
-                                    <ConnectGscPrompt onConnectClick={() => setIsGscModalOpen(true)} />
-                                </div>
-                            )}
+
+                    {isNewSite ? (
+                        <Card className="mt-8 text-center py-16">
+                            <LoadingSpinner text="Your first site scan is in progress..." />
+                            <p className="mt-4 text-slate-500">This may take a few minutes. We'll populate your dashboard as soon as it's complete.</p>
                         </Card>
-                         <Card title="Page Statuses">
-                            <ChartPieStatus data={dashboardData.charts.pageStatus} />
-                        </Card>
-                    </div>
-                    
-                    <div className="mt-8">
-                         <Card title="Issues Fixed (30 Days)">
-                            <ChartStackedIssues data={dashboardData.charts.issuesFixed} />
-                        </Card>
-                    </div>
-    
-                    <div className="mt-8" id="pages-table-card">
-                        <Card title="Pages">
-                            {pages.length > 0 ? (
-                                <PagesTable
-                                    pages={pages}
-                                    onForceRecrawl={handleForceRecrawl}
-                                    onPingForIndex={handlePingForIndex}
-                                    onBulkApprove={handleBulkApprove}
-                                />
-                            ) : (
-                                 <EmptyState
-                                    title="No Pages Found"
-                                    message="We haven't crawled any pages for this site yet. A crawl should complete shortly after connecting."
-                                    icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>}
-                                />
-                            )}
-                        </Card>
-                    </div>
-                    
-                    <div className="mt-8">
-                        <Card title="Recent Events">
-                            <RecentEventsTable events={dashboardData.events} />
-                        </Card>
-                    </div>
+                    ) : (
+                        <>
+                            <div id="stat-cards-container">
+                                <StatCards site={dashboardData.site} />
+                            </div>
+            
+                            <div className="mt-8" id="top-pages-container">
+                                <TopImprovedPages pages={dashboardData.topImprovedPages} />
+                            </div>
+            
+                            <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <Card title="Visibility Score Trend (30 Days)" className="lg:col-span-2" id="visibility-chart-card">
+                                {isGscConnected ? (
+                                        <ChartLineVisibility data={dashboardData.charts.visibilityTrend} />
+                                    ) : (
+                                        <div className="p-6">
+                                            <ConnectGscPrompt onConnectClick={() => setIsGscModalOpen(true)} />
+                                        </div>
+                                    )}
+                                </Card>
+                                <Card title="Page Statuses">
+                                    <ChartPieStatus data={dashboardData.charts.pageStatus} />
+                                </Card>
+                            </div>
+                            
+                            <div className="mt-8">
+                                <Card title="Issues Fixed (30 Days)">
+                                    <ChartStackedIssues data={dashboardData.charts.issuesFixed} />
+                                </Card>
+                            </div>
+            
+                            <div className="mt-8" id="pages-table-card">
+                                <Card title="Pages">
+                                    {pages.length > 0 ? (
+                                        <PagesTable
+                                            pages={pages}
+                                            onForceRecrawl={handleForceRecrawl}
+                                            onPingForIndex={handlePingForIndex}
+                                            onBulkApprove={handleBulkApprove}
+                                        />
+                                    ) : (
+                                        <EmptyState
+                                            title="No Pages Found"
+                                            message="We haven't crawled any pages for this site yet. A crawl should complete shortly after connecting."
+                                            icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>}
+                                        />
+                                    )}
+                                </Card>
+                            </div>
+                            
+                            <div className="mt-8">
+                                <Card title="Recent Events">
+                                    <RecentEventsTable events={dashboardData.events} />
+                                </Card>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </>

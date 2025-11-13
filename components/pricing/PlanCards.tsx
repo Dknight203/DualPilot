@@ -5,6 +5,7 @@ import Button from '../common/Button';
 interface PlanCardsProps {
     plans: Plan[];
     onSelectPlan: (planId: string) => void;
+    disabled?: boolean;
 }
 
 const CheckIcon: React.FC = () => (
@@ -13,13 +14,13 @@ const CheckIcon: React.FC = () => (
     </svg>
 );
 
-const PlanCards: React.FC<PlanCardsProps> = ({ plans, onSelectPlan }) => {
+const PlanCards: React.FC<PlanCardsProps> = ({ plans, onSelectPlan, disabled = false }) => {
     return (
-        <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0 xl:grid-cols-5">
+        <div className="mt-12 space-y-4 sm:mt-16 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-6 lg:max-w-4xl lg:mx-auto xl:max-w-none xl:mx-0 xl:grid-cols-4">
             {plans.map((plan) => {
                 const buttonText = plan.id === 'enterprise' 
                     ? 'Contact Sales' 
-                    : (plan.price === 0 ? 'Start for Free' : 'Choose Plan');
+                    : 'Choose Plan';
 
                 return (
                     <div key={plan.id} className={`relative border rounded-lg shadow-sm divide-y divide-slate-200 ${plan.isFeatured ? 'border-2 border-accent-default' : 'border-slate-200'}`}>
@@ -37,7 +38,7 @@ const PlanCards: React.FC<PlanCardsProps> = ({ plans, onSelectPlan }) => {
                                 {typeof plan.price === 'number' ? (
                                     <>
                                         <span className="text-4xl font-extrabold text-slate-900">${plan.price}</span>
-                                        {plan.price > 0 && <span className="text-base font-medium text-slate-500">/{plan.pricePeriod.substring(0, 2)}</span>}
+                                         <span className="text-base font-medium text-slate-500">/{plan.pricePeriod.substring(0, 2)}</span>
                                     </>
                                 ) : (
                                     <span className="text-4xl font-extrabold text-slate-900">{plan.price}</span>
@@ -47,6 +48,7 @@ const PlanCards: React.FC<PlanCardsProps> = ({ plans, onSelectPlan }) => {
                                 onClick={() => onSelectPlan(plan.id)}
                                 className="mt-8 w-full"
                                 variant={plan.isFeatured ? 'primary' : 'outline'}
+                                disabled={disabled}
                             >
                                 {buttonText}
                             </Button>

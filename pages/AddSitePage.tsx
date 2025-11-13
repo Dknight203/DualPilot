@@ -4,26 +4,25 @@ import { PlanId } from '../types';
 import Stepper from '../components/onboarding/Stepper';
 import StepEnterDomain from '../components/onboarding/StepEnterDomain';
 import StepIntegrations, { Platform } from '../components/onboarding/StepIntegrations';
-import StepScan from '../components/onboarding/StepScan';
 import UpgradeForMoreSites from '../components/onboarding/UpgradeForMoreSites';
 import { useNavigate } from 'react-router-dom';
+import { addSite } from '../services/api';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const AddSitePage: React.FC = () => {
-    const { sites, activeSite } = useSite();
+    const { sites, activeSite, refreshSites } = useSite();
     const navigate = useNavigate();
 
-    const steps = ['Add Site', 'Integrations', 'First Scan'];
+    const steps = ['Add Site', 'Integrations', 'Finish'];
     const [currentStep, setCurrentStep] = useState(1);
     const [domain, setDomain] = useState<string | null>(null);
     const [platform, setPlatform] = useState<Platform | null>(null);
     const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
 
     const handleNextStep = () => {
         if (currentStep < steps.length) {
             setCurrentStep(currentStep + 1);
-        } else {
-            // Finished the flow, go to dashboard
-            navigate('/dashboard');
         }
     };
 
@@ -38,23 +37,39 @@ const AddSitePage: React.FC = () => {
         setPlatform(selectedPlatform);
 
         if (activeSite) {
-            // Mock limit: Pro plan gets 1 site, Agency gets 10.
             const siteLimit = activeSite.plan === PlanId.Agency ? 10 : (activeSite.plan === PlanId.Pro ? 2 : 1);
             if (sites.length >= siteLimit) {
                 setShowUpgradePrompt(true);
             } else {
-                handleNextStep(); // This will go to step 2 (Integrations)
+                handleNextStep();
             }
         } else {
-            // Should not happen for an existing user, but as a fallback, proceed.
             handleNextStep();
+        }
+    };
+
+    const handleCreateSite = async () => {
+        if (!domain || !platform || !activeSite) {
+            alert("An error occurred. Missing required information.");
+            return;
+        }
+        setIsCreating(true);
+        try {
+            // Re-use existing plan, generate a dummy profile for now
+            const dummyProfile = `Site profile for ${domain}.`;
+            await addSite(domain, platform, activeSite.plan, dummyProfile);
+            await refreshSites();
+            navigate('/dashboard', { state: { toast: { message: `Successfully added ${domain}!`, type: 'success' }}});
+        } catch (error) {
+            alert("Failed to create site.");
+            setIsCreating(false);
         }
     };
 
     const handleStepClick = (step: number) => {
         if (step < currentStep) {
             if (showUpgradePrompt) {
-                setShowUpgradePrompt(false); // Go back to step 1 from upgrade prompt
+                setShowUpgradePrompt(false);
                 setCurrentStep(1);
             } else {
                 setCurrentStep(step);
@@ -66,19 +81,20 @@ const AddSitePage: React.FC = () => {
         if (showUpgradePrompt) {
             return <UpgradeForMoreSites />;
         }
+        
+        if (isCreating) {
+            return <div className="h-48 flex justify-center items-center"><LoadingSpinner text="Adding your new site..." /></div>
+        }
 
         switch (currentStep) {
             case 1:
                 return <StepEnterDomain onDetailsEntered={handleDetailsEntered} />;
             case 2:
                 if (!domain || !platform) return <div>Please return to the previous step to enter your domain.</div>;
-                return <StepIntegrations domain={domain} platform={platform} onNext={handleNextStep} onBack={handleBackStep} />;
+                return <StepIntegrations domain={domain} platform={platform} onNext={handleCreateSite} onBack={handleBackStep} />;
             case 3:
-                // Note: The original StepScan always sets a "firstLogin" flag. 
-                // A more robust implementation would use a different component or pass a prop.
-                // For now, we reuse it, but it will set a flag that shows the welcome modal, which is a minor UX issue.
-                // We will create a separate StepScan for this flow later.
-                return <StepScan />; 
+                // This step is now just a placeholder as creation happens in step 2
+                return <div className="text-center">Redirecting...</div>
             default:
                 return <div>Loading flow...</div>;
         }

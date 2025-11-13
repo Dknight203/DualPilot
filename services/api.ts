@@ -186,6 +186,14 @@ export const changePassword = async (userId: string, currentPassword: string, ne
 
 
 // --- MOCK FUNCTIONS (to be replaced) ---
+
+export const getSitePageCount = async (domain: string): Promise<number> => {
+    // Simulate a quick scan to get page count for plan validation
+    await new Promise(res => setTimeout(res, 2500));
+    // Return a random number for demo purposes
+    return Math.floor(Math.random() * 500) + 10;
+};
+
 export const scanDomain = (domain: string): Promise<ScanResult> => {
     const score = Math.floor(Math.random() * (95 - 60 + 1) + 60);
     const result: ScanResult = { score, classicReadiness: score > 70, aiReadiness: score > 80, issues: ['3 pages have no meta description', 'Missing Product schema on /shop/item-1'], suggestedNextStep: 'Automate fixes and boost your score!' };
