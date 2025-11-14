@@ -1,52 +1,99 @@
 // supabase/functions/gsc-list-sites/index.ts
 
-// Type declaration for the Deno global object
+// FIX: Add a type declaration for the Deno global object to resolve TypeScript errors.
+// Supabase Functions run in a Deno environment where 'Deno' is a predefined global.
 declare var Deno: any;
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleAuth } from "https://esm.sh/google-auth-library@9";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decodeJwt } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
   try {
-    const clientEmail = Deno.env.get("GSC_CLIENT_EMAIL");
-    const privateKey = Deno.env.get("GSC_PRIVATE_KEY");
-    if (!clientEmail || !privateKey) {
-      throw new Error("Missing GSC_CLIENT_EMAIL or GSC_PRIVATE_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // 1. Get logged-in user from the Auth header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return new Response("Unauthorized", { status: 401 });
+
+    const jwt = authHeader.replace("Bearer ", "");
+    const payload = decodeJwt(jwt);
+    const userId = payload.sub;
+
+    if (!userId) return new Response("Unauthorized", { status: 401 });
+
+    // 2. Pull this user's GSC connection row
+    const { data: conn, error: connErr } = await supabase
+      .from("gsc_connections")
+      .select("*")
+      .eq("owner_id", userId)
+      .limit(1)
+      .single();
+
+    if (connErr || !conn) {
+      return new Response(
+        JSON.stringify({ error: "No GSC connection found" }),
+        { status: 400 }
+      );
     }
 
-    const auth = new GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey.replace(/\\n/g, "\n"),
-      },
-      scopes: ["https://www.googleapis.com/auth/webmasters.readonly"],
-    });
+    let accessToken = conn.access_token;
 
-    const client = await auth.getClient();
-    const url = "https://searchconsole.googleapis.com/webmasters/v3/sites";
+    // 3. Refresh the token if needed
+    if (conn.token_expires_at && new Date(conn.token_expires_at) < new Date()) {
+      const refresh = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: Deno.env.get("GSC_CLIENT_ID")!,
+          client_secret: Deno.env.get("GSC_CLIENT_SECRET")!,
+          refresh_token: conn.refresh_token,
+          grant_type: "refresh_token",
+        }),
+      });
 
-    const res = await client.request({ url });
-    const sites = (res.data.siteEntry || []).map((s: any) => s.siteUrl);
+      const refreshJson = await refresh.json();
+      if (refreshJson.access_token) {
+        accessToken = refreshJson.access_token;
+
+        // Save new token
+        await supabase
+          .from("gsc_connections")
+          .update({
+            access_token: accessToken,
+            token_expires_at: new Date(Date.now() + refreshJson.expires_in * 1000).toISOString()
+          })
+          .eq("id", conn.id);
+      }
+    }
+
+    // 4. Call Google Search Console API
+    const gscRes = await fetch(
+      "https://www.googleapis.com/webmasters/v3/sites",
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
+    );
+
+    if (!gscRes.ok) {
+      const t = await gscRes.text();
+      return new Response(
+        JSON.stringify({ error: "GSC API error", details: t }),
+        { status: 500 }
+      );
+    }
+
+    const sites = await gscRes.json();
 
     return new Response(JSON.stringify({ sites }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" }
     });
+
   } catch (err) {
-    console.error("Error in gsc-list-sites:", err);
-    return new Response(JSON.stringify({ error: err.message ?? "Unknown error" }), {
+    return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
