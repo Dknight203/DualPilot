@@ -1,68 +1,82 @@
 import React from 'react';
 
 interface StepperProps {
-    steps: string[];
-    currentStep: number;
-    onStepClick: (step: number) => void;
+  steps: string[];
+  currentStep: number; // zero based from the parent
+  onStepClick: (step: number) => void;
 }
 
 const Stepper: React.FC<StepperProps> = ({ steps, currentStep, onStepClick }) => {
-    
-    return (
-        <nav aria-label="Progress">
-            <ol role="list" className="flex items-center">
-                {steps.map((step, stepIdx) => (
-                    <li key={step} className={`relative ${stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : ''}`}>
-                        {stepIdx < currentStep ? (
-                            <>
-                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div className="h-0.5 w-full bg-accent-default" />
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => onStepClick(stepIdx + 1)}
-                                    className="relative w-8 h-8 flex items-center justify-center rounded-full cursor-pointer group"
-                                >
-                                    <div className="absolute inset-0 bg-accent-default rounded-full group-hover:bg-accent-hover flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <span className="sr-only">{step}</span>
-                                </button>
-                            </>
-                        ) : stepIdx === currentStep ? (
-                             <>
-                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div className="h-0.5 w-full bg-slate-200" />
-                                </div>
-                                <div
-                                    className="relative w-8 h-8 flex items-center justify-center bg-white border-2 border-accent-default rounded-full"
-                                    aria-current="step"
-                                >
-                                    <span className="h-2.5 w-2.5 bg-accent-default rounded-full" aria-hidden="true" />
-                                    <span className="sr-only">{step}</span>
-                                </div>
-                             </>
-                        ) : (
-                             <>
-                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div className="h-0.5 w-full bg-slate-200" />
-                                </div>
-                                <div
-                                    className="group relative w-8 h-8 flex items-center justify-center bg-white border-2 border-slate-300 rounded-full"
-                                >
-                                    <span className="h-2.5 w-2.5 bg-transparent rounded-full" aria-hidden="true" />
-                                    <span className="sr-only">{step}</span>
-                                </div>
-                             </>
-                        )}
-                         <span className="absolute top-10 w-max -ml-2 text-center text-sm font-medium text-slate-600">{step}</span>
-                    </li>
-                ))}
-            </ol>
-        </nav>
-    );
+  return (
+    <div className="flex items-center justify-between w-full max-w-3xl mx-auto">
+      {steps.map((step, index) => {
+        const isCompleted = index < currentStep;
+        const isActive = index === currentStep;
+
+        return (
+          <div
+            key={step}
+            className="flex-1 flex flex-col items-center"
+          >
+            {/* connector line behind circles */}
+            {index > 0 && (
+              <div className="w-full h-0.5 bg-slate-200 -mt-4 mb-4">
+                <div
+                  className={`h-full transition-all ${
+                    isCompleted ? 'bg-indigo-500 w-full' : 'bg-slate-200 w-full'
+                  }`}
+                />
+              </div>
+            )}
+
+            {/* step circle */}
+            <button
+              type="button"
+              onClick={() => {
+                if (index <= currentStep) {
+                  onStepClick(index + 1);
+                }
+              }}
+              className={`
+                relative z-10 flex h-8 w-8 items-center justify-center rounded-full border text-sm font-medium
+                transition
+                ${isCompleted
+                  ? 'bg-indigo-500 border-indigo-500 text-white'
+                  : isActive
+                  ? 'bg-white border-indigo-500 text-indigo-600'
+                  : 'bg-white border-slate-300 text-slate-400'
+                }
+              `}
+            >
+              {isCompleted ? (
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16.667 5L8.125 13.542 3.333 8.75"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                index + 1
+              )}
+            </button>
+
+            {/* label */}
+            <div className="mt-2 text-xs font-medium text-slate-600 text-center">
+              {step}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 export default Stepper;
