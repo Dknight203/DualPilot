@@ -77,7 +77,7 @@ serve(async (req: Request) => {
     // Call Gemini HTTP API directly
     const prompt = `Based on the following text content from the website '${domain}', provide a concise, factual, one paragraph summary of what the company does. Content: "${websiteText}"`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
 
     const geminiResponse = await fetch(geminiUrl, {
       method: "POST",
