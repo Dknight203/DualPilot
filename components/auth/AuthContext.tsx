@@ -29,16 +29,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     async (supabaseUser: any): Promise<TeamMember | null> => {
       if (!supabase || !supabaseUser) return null;
 
-      const { data: profile, error } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", supabaseUser.id)
         .single();
 
-      if (error || !profile) {
+      if (error || !data) {
         console.error("Error fetching user profile or profile not found:", error);
 
-        // Fallback so the app never crashes for new users
         return {
           id: supabaseUser.id,
           name: supabaseUser.email || "New User",
@@ -50,12 +49,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       return {
-        id: profile.id,
-        name: profile.name || supabaseUser.email || "New User",
+        id: data.id,
+        name: data.name || supabaseUser.email || "New User",
         email: supabaseUser.email || "",
         role: "Admin",
         status: "Active",
-        avatarUrl: profile.avatar_url,
+        avatarUrl: data.avatar_url,
       } as TeamMember;
     },
     []
@@ -67,47 +66,61 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
-    let isMounted = true;
+    let cancelled = false;
 
-    const initAuth = async () => {
+    const init = async () => {
       try {
-        // 1. Explicitly restore any existing session on page load
-        const { data, error } = await supabase.auth.getSession();
+        // Restore existing session on first load
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
         if (error) {
           console.error("Error getting session:", error);
         }
 
-        if (data?.session && isMounted) {
-          setSession(data.session);
-          const profile = await fetchUserProfile(data.session.user);
-          if (!isMounted) return;
-          setUser(profile);
+        if (!cancelled) {
+          setSession(session || null);
+
+          if (session?.user) {
+            const profile = await fetchUserProfile(session.user);
+            if (!cancelled) {
+              setUser(profile);
+            }
+          }
         }
+      } catch (err) {
+        console.error("Unexpected error during auth init:", err);
       } finally {
-        if (isMounted) {
+        if (!cancelled) {
           setIsLoading(false);
         }
       }
     };
 
-    initAuth();
+    init();
 
-    // 2. Subscribe for future auth changes (login, logout, token refresh)
+    // Listen for future logins or logouts
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+      if (cancelled) return;
+
       setSession(newSession);
 
       if (newSession?.user) {
         const profile = await fetchUserProfile(newSession.user);
-        setUser(profile);
+        if (!cancelled) {
+          setUser(profile);
+        }
       } else {
         setUser(null);
       }
     });
 
     return () => {
-      isMounted = false;
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, [fetchUserProfile]);
@@ -116,7 +129,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!supabase) throw new Error("Supabase client not available.");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    // onAuthStateChange will update session and user
   };
 
   const logout = async () => {
@@ -145,7 +157,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   if (isLoading) {
-    // Render a simple loading state instead of a hard blank
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <p className="text-slate-500 text-sm">Loading your account…</p>
