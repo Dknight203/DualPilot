@@ -26,15 +26,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchUserProfile = useCallback(
     async (supabaseUser: any): Promise<TeamMember | null> => {
-      if (!supabase || !supabaseUser) return null;
+      if (!supabaseUser || !supabase) return null;
 
-      const { data, error } = await supabase
+      const { data: profile, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", supabaseUser.id)
         .single();
 
-      if (error || !data) {
+      if (error || !profile) {
         console.error("Error fetching user profile or profile not found:", error);
 
         // Fallback profile so the app never breaks for new users
@@ -49,12 +49,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       return {
-        id: data.id,
-        name: data.name || supabaseUser.email || "New User",
+        id: profile.id,
+        name: profile.name || supabaseUser.email || "New User",
         email: supabaseUser.email || "",
         role: "Admin",
         status: "Active",
-        avatarUrl: data.avatar_url,
+        avatarUrl: profile.avatar_url,
       } as TeamMember;
     },
     []
@@ -68,36 +68,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     let cancelled = false;
 
-    const init = async () => {
+    const restoreSession = async () => {
       try {
-        // Restore any existing session on first load
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
 
         if (error) {
           console.error("Error getting session:", error);
         }
 
-        if (!cancelled) {
-          setSession(session || null);
+        const currentSession = data?.session ?? null;
+        if (cancelled) return;
 
-          if (session?.user) {
-            const profile = await fetchUserProfile(session.user);
-            if (!cancelled) {
-              setUser(profile);
-            }
+        setSession(currentSession);
+
+        if (currentSession?.user) {
+          const profile = await fetchUserProfile(currentSession.user);
+          if (!cancelled) {
+            setUser(profile);
           }
+        } else {
+          setUser(null);
         }
       } catch (err) {
-        console.error("Unexpected error during auth init:", err);
+        console.error("Unexpected error while restoring session:", err);
       }
     };
 
-    init();
+    restoreSession();
 
-    // Listen for future auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
@@ -123,18 +121,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string) => {
     if (!supabase) throw new Error("Supabase client not available.");
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    // onAuthStateChange will update session and user
+    // onAuthStateChange will hydrate session + user
   };
 
   const logout = async () => {
-    if (!supabase) return;
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    localStorage.removeItem("activeSiteId");
-    localStorage.removeItem("gsc_connected");
+    try {
+      if (supabase) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error("Error during signOut:", error);
+        }
+      }
+    } finally {
+      // Always clear local state so UI definitely logs out
+      setUser(null);
+      setSession(null);
+      localStorage.removeItem("activeSiteId");
+      localStorage.removeItem("gsc_connected");
+    }
   };
 
   const refreshUser = async () => {
