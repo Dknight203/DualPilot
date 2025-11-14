@@ -141,6 +141,20 @@ export interface GscDataPoint {
     impressions: number;
 }
 
+export interface GscConnection {
+    id: string;
+    owner_id: string;
+    site_id?: string | null;
+    domain: string;
+    gsc_status: 'pending' | 'connected' | 'error';
+    access_token?: string | null;
+    refresh_token?: string | null;
+    token_expires_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    state_token?: string | null;
+}
+
 export interface AiCoverageData {
     name: 'Covered' | 'Not Covered';
     value: number;

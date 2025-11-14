@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { getReportData, getBrandingSettings } from '../services/api';
+import { getReportData, getBrandingSettings, checkGscConnection } from '../services/api';
 import { ReportData, BrandingSettings } from '../types';
 import { useSite } from '../components/site/SiteContext';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -64,24 +64,23 @@ const ReportsPage: React.FC = () => {
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await getReportData(dateRange, compare);
-            setReportData(data);
+            const [data, gscStatus] = await Promise.all([
+                getReportData(dateRange, compare),
+                checkGscConnection(activeSite?.id)
+            ]);
+             setReportData(data);
+             setIsGscConnected(gscStatus);
+
         } catch (error) {
             console.error("Failed to load report data", error);
             setToast({ message: 'Failed to load report data.', type: 'error' });
         } finally {
             setIsLoading(false);
         }
-    }, [dateRange, compare]);
+    }, [dateRange, compare, activeSite]);
     
     useEffect(() => {
-        const checkGsc = localStorage.getItem('gsc_connected') === 'true';
-        setIsGscConnected(checkGsc);
-        if(checkGsc) {
-            fetchData();
-        } else {
-            setIsLoading(false);
-        }
+        fetchData();
     }, [fetchData]);
 
     useEffect(() => {

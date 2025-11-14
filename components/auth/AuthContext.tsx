@@ -140,7 +140,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(null);
       setSession(null);
       localStorage.removeItem("activeSiteId");
-      localStorage.removeItem("gsc_connected");
     }
   };
 

@@ -110,6 +110,52 @@ export const getBillingInfo = async (): Promise<{ invoices: Invoice[] }> => {
 };
 
 // --- ONBOARDING & INSTALL ---
+export const startGscAuth = async (domain: string): Promise<{ authUrl: string }> => {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    const { data, error } = await supabase.functions.invoke('gsc-start-auth', {
+        body: { domain },
+    });
+    if (error) throw error;
+    return data;
+};
+
+export const pollGscStatus = async (domain: string): Promise<'pending' | 'connected' | 'error'> => {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 'pending';
+
+    const { data, error } = await supabase
+        .from('gsc_connections')
+        .select('gsc_status')
+        .eq('owner_id', user.id)
+        .eq('domain', domain)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+    
+    if (error || !data) {
+        return 'pending';
+    }
+    return data.gsc_status as 'pending' | 'connected' | 'error';
+};
+
+export const checkGscConnection = async (siteId?: string): Promise<boolean> => {
+    if (!supabase || !siteId) return false;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await supabase
+        .from('gsc_connections')
+        .select('id')
+        .eq('owner_id', user.id)
+        .eq('site_id', siteId)
+        .eq('gsc_status', 'connected')
+        .limit(1)
+        .single();
+        
+    return !error && !!data;
+};
+
 export const verifyDomain = async (domain: string): Promise<{ verified: boolean, heartbeat: string | null }> => {
     return simulateApiCall({ verified: true, heartbeat: new Date().toISOString() });
 };
@@ -132,9 +178,37 @@ export const addSite = async (domain: string, platform: Platform, plan: PlanId, 
     return simulateApiCall(newSite);
 };
 
-export const createGscConnection = async (siteId: string): Promise<void> => {
-    console.log(`Creating GSC connection for site ${siteId}`);
-    return simulateApiCall(undefined);
+export const createGscConnection = async (siteId: string, domain: string): Promise<void> => {
+    if (!supabase) throw new Error("Supabase client not initialized.");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User must be logged in.");
+
+    // This finds the most recent pending GSC connection for the user and associates it with the new siteId
+    const { data: conn, error: findError } = await supabase
+        .from('gsc_connections')
+        .select('id')
+        .eq('owner_id', user.id)
+        .eq('domain', domain)
+        .eq('gsc_status', 'connected')
+        .is('site_id', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+    if (findError || !conn) {
+        console.warn("No pending GSC connection found to associate with site:", siteId);
+        return;
+    }
+
+    const { error: updateError } = await supabase
+        .from('gsc_connections')
+        .update({ site_id: siteId })
+        .eq('id', conn.id);
+
+    if (updateError) {
+        console.error("Error associating GSC connection with site:", updateError);
+        throw updateError;
+    }
 };
 
 export const createCmsConnection = async (siteId: string, type: Platform): Promise<{ id: string, verification_token: string }> => {

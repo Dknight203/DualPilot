@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '../../common/Button';
 import LoadingSpinner from '../../common/LoadingSpinner';
+import { startGscAuth, pollGscStatus } from '../../../services/api';
+import { useSite } from '../../site/SiteContext';
 
 interface GscConnectModalProps {
     onClose: () => void;
@@ -12,16 +14,54 @@ const GoogleIcon: React.FC = () => (
 );
 
 const GscConnectModal: React.FC<GscConnectModalProps> = ({ onClose, onSuccess }) => {
-    const [status, setStatus] = useState<'idle' | 'connecting' | 'connected'>('idle');
+    const { activeSite } = useSite();
+    const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+    const pollingInterval = useRef<number | null>(null);
+    const popup = useRef<Window | null>(null);
 
-    const handleConnect = () => {
+     const stopPolling = () => {
+        if (pollingInterval.current) {
+            clearInterval(pollingInterval.current);
+            pollingInterval.current = null;
+        }
+    };
+    
+    useEffect(() => {
+        const handleAuthMessage = (event: MessageEvent) => {
+            if (event.data === 'gsc-connected') {
+                stopPolling();
+                setStatus('connected');
+                setTimeout(onSuccess, 1500);
+            }
+        };
+        window.addEventListener('message', handleAuthMessage);
+        return () => {
+            window.removeEventListener('message', handleAuthMessage);
+            stopPolling();
+        };
+    }, [onSuccess]);
+
+    const handleConnect = async () => {
+        if (!activeSite) return;
         setStatus('connecting');
-        // Simulate OAuth flow
-        setTimeout(() => {
-            localStorage.setItem('gsc_connected', 'true');
-            setStatus('connected');
-            setTimeout(onSuccess, 1500); // Call success after a delay
-        }, 2000);
+        try {
+            const { authUrl } = await startGscAuth(activeSite.domain);
+            popup.current = window.open(authUrl, '_blank', 'width=600,height=700');
+
+            pollingInterval.current = window.setInterval(async () => {
+                if (!activeSite) return;
+                const gscStatus = await pollGscStatus(activeSite.domain);
+                if (gscStatus === 'connected') {
+                    stopPolling();
+                    setStatus('connected');
+                    setTimeout(onSuccess, 1500);
+                }
+            }, 3000);
+
+        } catch (err) {
+            console.error(err);
+            setStatus('error');
+        }
     };
 
     return (
@@ -48,12 +88,15 @@ const GscConnectModal: React.FC<GscConnectModalProps> = ({ onClose, onSuccess })
                             Connect with Google
                         </Button>
                     )}
-                     {status === 'connecting' && <LoadingSpinner text="Connecting to Google..." />}
+                     {status === 'connecting' && <LoadingSpinner text="Waiting for authorization..." />}
                      {status === 'connected' && (
                          <div className="text-center text-green-600 font-semibold text-lg animate-fade-in-up">
                             <p>✓ Successfully Connected!</p>
                             <p className="text-sm font-normal text-slate-500">Loading your data...</p>
                          </div>
+                     )}
+                     {status === 'error' && (
+                          <p className="text-center text-red-500">Could not initiate connection. Please try again.</p>
                      )}
                 </div>
             </div>

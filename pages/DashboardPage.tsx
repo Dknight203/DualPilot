@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Site, LineChartData, StackedBarChartData, PieChartData, Page, Event as AppEvent, ImprovedPage, PageStatus } from '../types';
-import { getDashboardData, getPages, forceRecrawl, pingForIndex, bulkApprovePages, bulkApproveOptimizations } from '../services/api';
+import { getDashboardData, getPages, forceRecrawl, pingForIndex, bulkApprovePages, bulkApproveOptimizations, checkGscConnection } from '../services/api';
 import { useSite } from '../components/site/SiteContext';
 import StatCards from '../components/dashboard/StatCards';
 import ChartLineVisibility from '../components/dashboard/ChartLineVisibility';
@@ -59,21 +59,23 @@ const DashboardPage: React.FC = () => {
         }
     }, [location, navigate]);
 
-    const fetchDataForSite = useCallback(async (siteId: string) => {
+    const fetchDataForSite = useCallback(async (site: Site) => {
         setIsLoading(true);
         setIsReadyForTour(false);
         setDashboardData(null);
         setPages(null);
         try {
-            const [dashData, pagesData] = await Promise.all([
-                getDashboardData(siteId),
-                getPages(siteId, {})
+            const [dashData, pagesData, gscStatus] = await Promise.all([
+                getDashboardData(site.id),
+                getPages(site.id, {}),
+                checkGscConnection(site.id)
             ]);
             setDashboardData(dashData);
             setPages(pagesData);
+            setIsGscConnected(gscStatus);
         } catch (error) {
-            console.error("Failed to fetch dashboard data for site", siteId, error);
-            setToast({ message: `Failed to load data for ${siteId}.`, type: 'error' });
+            console.error("Failed to fetch dashboard data for site", site.id, error);
+            setToast({ message: `Failed to load data for ${site.siteName}.`, type: 'error' });
         } finally {
             setIsLoading(false);
         }
@@ -81,8 +83,6 @@ const DashboardPage: React.FC = () => {
 
     // Check GSC status and first-login flag on mount
     useEffect(() => {
-        const checkGsc = localStorage.getItem('gsc_connected') === 'true';
-        setIsGscConnected(checkGsc);
         const isFirstLogin = localStorage.getItem('isFirstLogin') === 'true';
         if (isFirstLogin) {
             setShowWelcomeModal(true);
@@ -93,7 +93,7 @@ const DashboardPage: React.FC = () => {
     // Fetch data when active site changes
     useEffect(() => {
         if (activeSite) {
-            fetchDataForSite(activeSite.id);
+            fetchDataForSite(activeSite);
         } else {
              setIsLoading(false);
         }
@@ -185,7 +185,7 @@ const DashboardPage: React.FC = () => {
         setIsGscConnected(true);
         setToast({ message: 'Google Search Console connected successfully!', type: 'success' });
         if(activeSite) {
-            fetchDataForSite(activeSite.id);
+            fetchDataForSite(activeSite);
         }
     };
 

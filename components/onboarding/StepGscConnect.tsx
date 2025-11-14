@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '../common/Button';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { startGscAuth, pollGscStatus } from '../../services/api';
+import Toast from '../common/Toast';
 
 interface StepGscConnectProps {
+    domain: string;
     onNext: () => void;
     onBack: () => void;
 }
@@ -23,21 +26,71 @@ const InfoItem: React.FC<{ title: string; children: React.ReactNode }> = ({ titl
     </div>
 );
 
-const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext, onBack }) => {
-    const [status, setStatus] = useState<'idle' | 'connecting' | 'connected'>('idle');
+const StepGscConnect: React.FC<StepGscConnectProps> = ({ domain, onNext, onBack }) => {
+    const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+    const [toast, setToast] = useState<{ message: string; type: 'error' } | null>(null);
+    const pollingInterval = useRef<number | null>(null);
+    const popup = useRef<Window | null>(null);
 
-    const handleConnect = () => {
+    const stopPolling = () => {
+        if (pollingInterval.current) {
+            clearInterval(pollingInterval.current);
+            pollingInterval.current = null;
+        }
+    };
+
+    useEffect(() => {
+        // Listen for message from OAuth callback window
+        const handleAuthMessage = (event: MessageEvent) => {
+            if (event.data === 'gsc-connected') {
+                stopPolling();
+                setStatus('connected');
+                if (popup.current) {
+                    popup.current.close();
+                }
+            }
+        };
+        window.addEventListener('message', handleAuthMessage);
+        return () => {
+            window.removeEventListener('message', handleAuthMessage);
+            stopPolling(); // Cleanup on unmount
+        };
+    }, []);
+
+    const handleConnect = async () => {
         setStatus('connecting');
-        // Simulate OAuth flow
-        setTimeout(() => {
-            localStorage.setItem('gsc_connected', 'true');
-            setStatus('connected');
-            // NOTE: Auto-advance removed. User must now click the "Continue" button.
-        }, 2000);
+        setToast(null);
+        try {
+            const { authUrl } = await startGscAuth(domain);
+            popup.current = window.open(authUrl, '_blank', 'width=600,height=700');
+            
+            // Start polling
+            pollingInterval.current = window.setInterval(async () => {
+                const gscStatus = await pollGscStatus(domain);
+                if (gscStatus === 'connected') {
+                    stopPolling();
+                    setStatus('connected');
+                    if (popup.current) popup.current.close();
+                }
+                if (popup.current && popup.current.closed) {
+                    // If user closes popup, check status one last time
+                    if(gscStatus !== 'connected') {
+                        stopPolling();
+                        setStatus('idle');
+                    }
+                }
+            }, 3000);
+
+        } catch (err) {
+            console.error(err);
+            setStatus('error');
+            setToast({ message: 'Could not start the connection process. Please try again.', type: 'error' });
+        }
     };
 
     return (
         <div className="flex flex-col items-center justify-center py-8">
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <h2 className="text-2xl font-bold text-center text-slate-900">Connect Google Search Console</h2>
             <p className="mt-2 text-center text-slate-600 max-w-lg">
                 This optional but highly recommended step allows DualPilot to show you real-world performance data.
@@ -59,21 +112,18 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext, onBack }) => {
             </div>
 
             <div className="mt-8 flex items-center gap-4">
-                 <Button onClick={onBack} variant="outline" size="lg">
+                 <Button onClick={onBack} variant="outline" size="lg" disabled={status === 'connecting'}>
                     Back
                 </Button>
-                {status === 'idle' && (
-                    <Button size="lg" onClick={handleConnect}>
-                        <GoogleIcon />
-                        Connect with Google
+                {status !== 'connected' ? (
+                    <Button size="lg" onClick={handleConnect} disabled={status === 'connecting'} isLoading={status === 'connecting'}>
+                        {status === 'connecting' ? 'Waiting for authorization...' : <><GoogleIcon /> Connect with Google</>}
                     </Button>
-                )}
-                 {status === 'connecting' && <LoadingSpinner text="Connecting to Google..." />}
-                 {status === 'connected' && (
+                ) : (
                      <Button size="lg" onClick={onNext}>
                         ✓ Connected! Continue
                      </Button>
-                 )}
+                )}
             </div>
 
              <div className="mt-8 text-center">

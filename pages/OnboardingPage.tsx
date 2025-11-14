@@ -68,7 +68,7 @@ const OnboardingPage: React.FC = () => {
 
       if (gscConnected && site?.id) {
         try {
-          await createGscConnection(site.id);
+          await createGscConnection(site.id, domain);
         } catch (err) {
           console.error("Failed to create GSC connection for site:", err);
         }
@@ -125,6 +125,7 @@ const OnboardingPage: React.FC = () => {
       case 3:
         return (
           <StepGscConnect
+            domain={domain}
             onNext={() => {
               setGscConnected(true);
               handleNextStep();
