@@ -188,7 +188,8 @@ export const createCheckoutSession = (planId: string): Promise<{ checkoutUrl: st
 };
 
 export const getDashboardData = (siteId: string) => {
-    const site: Site = { id: siteId, siteName: 'Demo Site', domain: 'demo.com', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' };
+    // FIX: Added missing properties 'platform' and 'siteProfile' to conform to the Site type.
+    const site: Site = { id: siteId, siteName: 'Demo Site', domain: 'demo.com', plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh', platform: 'other', siteProfile: 'This is a demo site profile.' };
     const visibilityTrend: LineChartData[] = Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString(), score: 80 + Math.sin(i / 3) * 5 }));
     const issuesFixed: StackedBarChartData[] = Array.from({ length: 30 }, (_, i) => ({ date: new Date(Date.now() - (29 - i) * 86400000).toISOString(), title: Math.floor(Math.random() * 5), description: Math.floor(Math.random() * 8), canonical: Math.floor(Math.random() * 2), schema: Math.floor(Math.random() * 4), brokenLinks: Math.floor(Math.random() * 1) }));
     const pageStatus: PieChartData[] = [{ name: PageStatus.Optimized, value: 180 }, { name: PageStatus.NeedsReview, value: 45 }, { name: PageStatus.Pending, value: 25 }];
@@ -225,7 +226,8 @@ export const optimizePage = (pageId: string): Promise<PageOutput> => simulateApi
 export const approveOptimization = (pageId: string, newOutput: PageOutput): Promise<{ success: boolean }> => simulateApiCall({ success: true });
 export const getBillingInfo = (): Promise<{ invoices: Invoice[] }> => simulateApiCall({ invoices: [] });
 export const saveSiteSettings = (siteId: string, newSiteName: string, newDomain: string): Promise<Site> => {
-    const updatedSite: Site = { id: siteId, siteName: newSiteName, domain: newDomain, plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh' };
+    // FIX: Added missing properties 'platform' and 'siteProfile' to conform to the Site type.
+    const updatedSite: Site = { id: siteId, siteName: newSiteName, domain: newDomain, plan: PlanId.Pro, optimizedPages: 180, totalPages: 250, visibilityScore: 91, refreshPolicy: 'Daily refresh', platform: 'other', siteProfile: 'This is an updated site profile.' };
     return simulateApiCall(updatedSite);
 }
 export const getTeamMembers = (): Promise<TeamMember[]> => simulateApiCall([]);

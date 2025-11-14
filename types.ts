@@ -1,5 +1,3 @@
-// FIX: Populated this file with type definitions to resolve import errors across the application.
-
 export enum PlanId {
     Essentials = 'essentials',
     Pro = 'pro',
@@ -24,14 +22,13 @@ export interface Site {
     id: string;
     siteName: string;
     domain: string;
-    // FIX: Made plan optional and added platform, siteProfile, and siteProfileStatus to align with API responses and fix type errors.
-    plan?: PlanId;
+    plan: PlanId;
     optimizedPages: number;
     totalPages: number;
     visibilityScore: number;
     refreshPolicy: string;
-    platform?: Platform;
-    siteProfile?: string;
+    platform: Platform;
+    siteProfile: string;
 }
 
 export interface ScanResult {

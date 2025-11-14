@@ -1,6 +1,8 @@
 
+
 import { Site, PlanId } from '../types';
 
+// FIX: Added missing properties 'platform' and 'siteProfile' to conform to the Site type.
 export const seedSite: Site = {
     id: 'site_123',
     siteName: 'DualPilot Demo',
@@ -10,4 +12,6 @@ export const seedSite: Site = {
     totalPages: 250,
     visibilityScore: 91,
     refreshPolicy: 'Daily refresh',
+    platform: 'other',
+    siteProfile: 'DualPilot is an automated AI plus Search visibility engine that audits, optimizes, and keeps your site visible.',
 };
