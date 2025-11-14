@@ -35,14 +35,16 @@ const MOCK_DB = {
             ]
         } as PageDetails
     },
+    // FIX: Explicitly typed the array as TeamMember[] to match the type definition and resolve type errors.
     teamMembers: [
         { id: 'user_current', name: 'You', email: 'chrisley.ceme@gmail.com', role: 'Admin', status: 'Active', isOwner: true },
         { id: 'user_02', name: 'Jane Doe', email: 'jane@dualpilot.ai', role: 'Member', status: 'Active' },
         { id: 'user_03', name: 'john.doe@example.com', email: 'john.doe@example.com', role: 'Member', status: 'Pending Invitation' },
-    ],
+    ] as TeamMember[],
+    // FIX: Explicitly typed the array as ApiKey[] to match the type definition and resolve type errors.
     apiKeys: [
         { id: 'key_01', name: 'My Main App', lastFour: 'a1b2', createdAt: new Date().toISOString(), status: 'active' }
-    ],
+    ] as ApiKey[],
     branding: { logoUrl: null } as BrandingSettings,
     cmsConnections: [] as (CmsConnection & { id: string; site_id: string; verification_token: string; verified: boolean })[],
 };
@@ -194,11 +196,12 @@ export const getDashboardData = async (siteId: string) => {
                 { name: PageStatus.Pending, value: 0 },
             ]
         },
+        // FIX: Explicitly typed the events array as Event[] to match the type definition and resolve type errors downstream.
         events: [
             { id: 'evt_01', type: 'Site Crawl', status: 'Success', timestamp: new Date().toISOString(), details: 'Crawled 250 pages' },
             { id: 'evt_02', type: 'Optimization', status: 'Success', timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), details: 'Optimized /blog/ai-seo-strategies' },
             { id: 'evt_03', type: 'Index Ping', status: 'In Progress', timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), details: 'Pinged Google & Bing for 5 pages' },
-        ],
+        ] as Event[],
         topImprovedPages: mockImprovedPages,
     });
 };
