@@ -8,7 +8,7 @@ import StepIntegrations from "../components/onboarding/StepIntegrations";
 import { useAuth } from "../components/auth/AuthContext";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import { PlanId, Platform } from "../types";
-import { addSite } from "../services/api";
+import { addSite, createGscConnection, createCmsConnection } from "../services/api";
 import { useSite } from "../components/site/SiteContext";
 import { useNavigate } from "react-router-dom";
 
@@ -24,6 +24,8 @@ const OnboardingPage: React.FC = () => {
   const [domain, setDomain] = useState("");
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [siteProfile, setSiteProfile] = useState("");
+  const [gscConnected, setGscConnected] = useState(false);
+  const [integrationsConnected, setIntegrationsConnected] = useState(false);
 
   // UI state
   const [isCreatingSite, setIsCreatingSite] = useState(false);
@@ -61,8 +63,24 @@ const OnboardingPage: React.FC = () => {
 
     try {
       // Save site with an initial page count of 0. The real scan will happen post-creation.
-      await addSite(domain, platform, planId, siteProfile, 0);
+      const site = await addSite(domain, platform, planId, siteProfile, 0);
       await refreshSites();
+
+      if (gscConnected && site?.id) {
+        try {
+          await createGscConnection(site.id);
+        } catch (err) {
+          console.error("Failed to create GSC connection for site:", err);
+        }
+      }
+
+      if (integrationsConnected && site?.id && platform) {
+        try {
+          await createCmsConnection(site.id, platform);
+        } catch (err) {
+          console.error("Failed to create CMS connection for site:", err);
+        }
+      }
 
       // Special handling for demo user to show tour vs. checkout
       if (user.email === "chrisley.ceme@gmail.com") {
@@ -105,20 +123,32 @@ const OnboardingPage: React.FC = () => {
         );
 
       case 3:
-        return <StepGscConnect onNext={handleNextStep} onBack={handleBackStep} />;
+        return (
+          <StepGscConnect
+            onNext={() => {
+              setGscConnected(true);
+              handleNextStep();
+            }}
+            onBack={handleBackStep}
+          />
+        );
 
       case 4:
-        if (!domain || !platform)
+        if (!domain || !platform) {
           return (
-            <div className="flex justify-center py-10">
+             <div className="flex justify-center py-10">
               <p>Please return to a previous step to enter your site details.</p>
             </div>
           );
+        }
         return (
           <StepIntegrations
             domain={domain}
             platform={platform}
-            onNext={handleNextStep}
+            onNext={() => {
+              setIntegrationsConnected(true);
+              handleNextStep();
+            }}
             onBack={handleBackStep}
           />
         );

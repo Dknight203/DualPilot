@@ -282,3 +282,56 @@ export const generateAiSummary = async (domain: string): Promise<string> => {
         throw new Error(error?.message || "An error occurred while generating the summary. Please try again later.");
     }
 };
+
+export const createGscConnection = async (siteId: string): Promise<void> => {
+  if (!supabase) throw new Error("Supabase client not initialized.");
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error("Error getting user in createGscConnection:", userError);
+    throw userError;
+  }
+  if (!user) {
+    throw new Error("User must be logged in to create a GSC connection.");
+  }
+
+  const { error } = await supabase
+    .from("gsc_connections")
+    .insert({
+      site_id: siteId,
+      owner_id: user.id,
+      gsc_status: "connected",
+    });
+
+  if (error) {
+    console.error("Error creating GSC connection:", error);
+    throw error;
+  }
+};
+
+export const createCmsConnection = async (siteId: string, platform: Platform): Promise<void> => {
+  if (!supabase) throw new Error("Supabase client not initialized.");
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    console.error("Error getting user in createCmsConnection:", userError);
+    throw userError;
+  }
+  if (!user) {
+    throw new Error("User must be logged in to create a CMS connection.");
+  }
+
+  const { error } = await supabase
+    .from("cms_connections")
+    .insert({
+      site_id: siteId,
+      owner_id: user.id,
+      platform,
+      status: "connected",
+    });
+
+  if (error) {
+    console.error("Error creating CMS connection:", error);
+    throw error;
+  }
+};
