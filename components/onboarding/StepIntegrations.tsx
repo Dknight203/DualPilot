@@ -26,12 +26,11 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, o
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
     useEffect(() => {
-        // Admin bypass: If the user is the special admin, auto-verify and proceed.
+        // Admin bypass: If the user is the special admin, auto-verify.
         if (user?.email === ADMIN_EMAIL) {
             setIsVerified(true);
-            onNext();
         }
-    }, [user, onNext]);
+    }, [user]);
 
 
     const handleVerify = async () => {
@@ -51,11 +50,6 @@ const StepIntegrations: React.FC<StepIntegrationsProps> = ({ domain, platform, o
         }
     };
     
-    // If it's the admin, they will be auto-navigated, so we can show a brief loading state.
-    if (user?.email === ADMIN_EMAIL) {
-        return <div className="text-center py-10">Admin account detected. Bypassing integration step...</div>;
-    }
-
     const renderContent = () => {
         let formComponent;
         

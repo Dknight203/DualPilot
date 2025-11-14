@@ -32,7 +32,7 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext, onBack }) => {
         setTimeout(() => {
             localStorage.setItem('gsc_connected', 'true');
             setStatus('connected');
-            setTimeout(onNext, 1500); // Move to next step after a delay
+            // NOTE: Auto-advance removed. User must now click the "Continue" button.
         }, 2000);
     };
 
@@ -70,10 +70,9 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext, onBack }) => {
                 )}
                  {status === 'connecting' && <LoadingSpinner text="Connecting to Google..." />}
                  {status === 'connected' && (
-                     <div className="text-center text-green-600 font-semibold text-lg animate-fade-in-up">
-                        <p>✓ Successfully Connected!</p>
-                        <p className="text-sm font-normal text-slate-500">Continuing to the next step...</p>
-                     </div>
+                     <Button size="lg" onClick={onNext}>
+                        ✓ Connected! Continue
+                     </Button>
                  )}
             </div>
 
