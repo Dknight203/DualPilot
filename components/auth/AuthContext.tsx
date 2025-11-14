@@ -23,7 +23,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<any | null>(null);
   const [user, setUser] = useState<TeamMember | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const fetchUserProfile = useCallback(
     async (supabaseUser: any): Promise<TeamMember | null> => {
@@ -38,6 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error || !data) {
         console.error("Error fetching user profile or profile not found:", error);
 
+        // Fallback profile so the app never breaks for new users
         return {
           id: supabaseUser.id,
           name: supabaseUser.email || "New User",
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     if (!supabase) {
-      setIsLoading(false);
+      console.error("Supabase client not initialized in AuthProvider.");
       return;
     }
 
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const init = async () => {
       try {
-        // Restore existing session on first load
+        // Restore any existing session on first load
         const {
           data: { session },
           error,
@@ -92,16 +92,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       } catch (err) {
         console.error("Unexpected error during auth init:", err);
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
       }
     };
 
     init();
 
-    // Listen for future logins or logouts
+    // Listen for future auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
@@ -129,6 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!supabase) throw new Error("Supabase client not available.");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
+    // onAuthStateChange will update session and user
   };
 
   const logout = async () => {
@@ -155,14 +152,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     refreshUser,
     session,
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-slate-500 text-sm">Loading your account…</p>
-      </div>
-    );
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
