@@ -405,12 +405,35 @@ export const getAiVisibilityData = async (): Promise<{ pages: Page[], siteProfil
 };
 
 export const generateAiSummary = async (promptOrDomain: string): Promise<string> => {
-    // This mocks the call to the Supabase function
-    await simulateApiCall({}, 2000);
-    if (promptOrDomain.includes('.')) { // Assume it's a domain
-        return `DualPilot is an innovative AI-powered search visibility engine. It is designed to meticulously audit, optimize, and consistently improve website metadata and schema, ensuring maximum visibility on both traditional search engines and modern AI assistants.`;
+  try {
+    const { data, error } = await supabase.functions.invoke("generate-summary", {
+      body: { domain: promptOrDomain },
+    });
+
+    if (error) {
+      console.error("Error from generate-summary function", error);
+      throw error;
     }
-    return `Based on your query about "${promptOrDomain}", here is a generated insight: To improve your ranking, focus on creating long-form content that addresses user intent directly. Also, ensure your technical SEO is flawless, with a particular focus on Core Web Vitals and structured data implementation.`;
+
+    // Preferred response shape: { summary: string }
+    if (data && typeof (data as any).summary === "string") {
+      return (data as any).summary;
+    }
+
+    // Fallback if the function ever returns a bare string
+    if (typeof data === "string") {
+      return data;
+    }
+  } catch (err) {
+    console.error("Falling back to local summary text in generateAiSummary", err);
+  }
+
+  // Fallback behavior if the edge function is unavailable
+  if (promptOrDomain.includes(".")) {
+    return `DualPilot is an AI powered search visibility engine that crawls ${promptOrDomain} and continuously improves visibility across classic search engines and modern AI assistants.`;
+  }
+
+  return `Based on your input "${promptOrDomain}", DualPilot helps your site appear more often in both traditional search and AI assistants by auditing pages, rewriting metadata, and keeping structured data in shape.`;
 };
 
 export const getSiteProfile = async (): Promise<string> => {

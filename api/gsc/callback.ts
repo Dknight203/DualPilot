@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!tokenJson.access_token) {
     console.error(tokenJson);
-    return res.redirect("/?gsc_error=true");
+    return res.redirect("/#/onboarding?gsc_error=true");
   }
 
   const expiresAt =
@@ -61,8 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (error) {
     console.error(error);
-    return res.redirect("/?gsc_error=true");
+    return res.redirect("/#/onboarding?gsc_error=true");
   }
 
-  return res.redirect("/?gsc=connected");
+  return res.redirect("/#/onboarding?gsc=connected");
 }
