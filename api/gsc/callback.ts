@@ -38,8 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const tokenJson = await tokenRes.json();
 
   if (!tokenJson.access_token) {
-    console.error("Token exchange failed:", tokenJson);
-    return res.redirect("/?gsc_error=true");
+    return res.status(500).send("Token exchange failed");
   }
 
   const expiresAt =
@@ -47,25 +46,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ? new Date(Date.now() + tokenJson.expires_in * 1000).toISOString()
       : null;
 
-  // Note: The original prompt used `user_id`. This has been changed to `owner_id`
-  // to match the existing database schema and fulfill the "no DB changes" requirement.
   const { error } = await supabaseServer
     .from("gsc_connections")
     .upsert({
       owner_id: userId,
       access_token: tokenJson.access_token,
       refresh_token: tokenJson.refresh_token || null,
-      token_expires_at: expiresAt,
+      token_expires: expiresAt,
       gsc_status: "connected",
       state_token: state,
       updated_at: new Date().toISOString(),
-      // The domain is unknown here, but owner_id should be the conflict target
-    }, { onConflict: 'owner_id' });
+    });
 
   if (error) {
-    console.error("Supabase upsert error:", error);
+    console.error(error);
     return res.redirect("/?gsc_error=true");
   }
 
-  return res.redirect("/#/onboarding?gsc=connected");
+  return res.redirect("/?gsc=connected");
 }
