@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../common/Button';
-import LoadingSpinner from '../common/LoadingSpinner';
-import { startGscAuth, pollGscStatus } from '../../services/api';
 import Toast from '../common/Toast';
+import { supabase } from '../../supabaseClient';
+import { useAuth } from '../auth/AuthContext';
 
 interface StepGscConnectProps {
     domain: string;
@@ -19,74 +20,49 @@ const GoogleIcon: React.FC = () => (
     </svg>
 );
 
-const InfoItem: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div>
-        <h4 className="font-semibold text-slate-700">{title}</h4>
-        <p className="text-sm text-slate-500 mt-1">{children}</p>
-    </div>
-);
-
-const StepGscConnect: React.FC<StepGscConnectProps> = ({ domain, onNext, onBack }) => {
+const StepGscConnect: React.FC<StepGscConnectProps> = ({ onNext, onBack }) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
     const [toast, setToast] = useState<{ message: string; type: 'error' } | null>(null);
-    const pollingInterval = useRef<number | null>(null);
-    const popup = useRef<Window | null>(null);
-
-    const stopPolling = () => {
-        if (pollingInterval.current) {
-            clearInterval(pollingInterval.current);
-            pollingInterval.current = null;
-        }
-    };
 
     useEffect(() => {
-        // Listen for message from OAuth callback window
-        const handleAuthMessage = (event: MessageEvent) => {
-            if (event.data === 'gsc-connected') {
-                stopPolling();
-                setStatus('connected');
-                if (popup.current) {
-                    popup.current.close();
-                }
-            }
-        };
-        window.addEventListener('message', handleAuthMessage);
-        return () => {
-            window.removeEventListener('message', handleAuthMessage);
-            stopPolling(); // Cleanup on unmount
-        };
-    }, []);
-
-    const handleConnect = async () => {
-        setStatus('connecting');
-        setToast(null);
-        try {
-            const { authUrl } = await startGscAuth(domain);
-            popup.current = window.open(authUrl, '_blank', 'width=600,height=700');
-            
-            // Start polling
-            pollingInterval.current = window.setInterval(async () => {
-                const gscStatus = await pollGscStatus(domain);
-                if (gscStatus === 'connected') {
-                    stopPolling();
-                    setStatus('connected');
-                    if (popup.current) popup.current.close();
-                }
-                if (popup.current && popup.current.closed) {
-                    // If user closes popup, check status one last time
-                    if(gscStatus !== 'connected') {
-                        stopPolling();
-                        setStatus('idle');
-                    }
-                }
-            }, 3000);
-
-        } catch (err) {
-            console.error(err);
+        // Check for redirect parameters
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('gsc') === 'connected') {
+            setStatus('connected');
+            navigate('/onboarding', { replace: true });
+        } else if (params.get('gsc_error') === 'true') {
             setStatus('error');
-            setToast({ message: 'Could not start the connection process. Please try again.', type: 'error' });
+            setToast({ message: 'Connection failed. Please try again.', type: 'error' });
+            navigate('/onboarding', { replace: true });
+        } else {
+            // Check for existing connection in DB on initial load
+            const checkConnection = async () => {
+                if (!user) return;
+                const { data, error } = await supabase
+                    .from('gsc_connections')
+                    .select('id')
+                    .eq('owner_id', user.id)
+                    .eq('gsc_status', 'connected')
+                    .limit(1)
+                    .single();
+                if (data && !error) {
+                    setStatus('connected');
+                }
+            };
+            checkConnection();
         }
-    };
+    }, [navigate, user]);
+
+    async function handleConnect() {
+        if (!user) {
+            setToast({ message: 'You must be logged in to connect.', type: 'error' });
+            return;
+        }
+        setStatus('connecting');
+        window.location.href = `/api/gsc/start?userId=${user.id}`;
+    }
 
     return (
         <div className="flex flex-col items-center justify-center py-8">
@@ -95,38 +71,30 @@ const StepGscConnect: React.FC<StepGscConnectProps> = ({ domain, onNext, onBack 
             <p className="mt-2 text-center text-slate-600 max-w-lg">
                 This optional but highly recommended step allows DualPilot to show you real-world performance data.
             </p>
-            
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl text-left bg-slate-50 p-6 rounded-lg border">
-                 <InfoItem title="Why we ask">
-                    Connecting GSC is vital for providing you with real-world performance data directly from Google.
-                </InfoItem>
-                <InfoItem title="What you get">
-                    You'll see how your optimizations impact your site's clicks and impressions in your reports.
-                </InfoItem>
-                 <InfoItem title="If you skip">
-                    Your reports will not contain performance metrics like clicks, impressions, or CTR.
-                </InfoItem>
-                 <InfoItem title="Where to find it later">
-                    You can always connect this later from the Reports or Settings page for your site.
-                </InfoItem>
-            </div>
 
-            <div className="mt-8 flex items-center gap-4">
-                 <Button onClick={onBack} variant="outline" size="lg" disabled={status === 'connecting'}>
-                    Back
-                </Button>
-                {status !== 'connected' ? (
-                    <Button size="lg" onClick={handleConnect} disabled={status === 'connecting'} isLoading={status === 'connecting'}>
-                        {status === 'connecting' ? 'Waiting for authorization...' : <><GoogleIcon /> Connect with Google</>}
-                    </Button>
+            <div className="mt-8">
+                {status === 'connected' ? (
+                    <div className="text-center p-6 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="font-semibold text-green-700">✓ Google Search Console Connected!</p>
+                    </div>
                 ) : (
-                     <Button size="lg" onClick={onNext}>
-                        ✓ Connected! Continue
-                     </Button>
+                    <Button size="lg" onClick={handleConnect} isLoading={status === 'connecting'}>
+                        <GoogleIcon />
+                        {status === 'connecting' ? 'Redirecting...' : 'Connect with Google'}
+                    </Button>
                 )}
             </div>
+            
+            <div className="mt-8 flex items-center gap-4">
+                <Button onClick={onBack} variant="outline" size="lg" disabled={status === 'connecting'}>
+                    Back
+                </Button>
+                <Button size="lg" onClick={onNext} disabled={status !== 'connected'}>
+                    Continue
+                </Button>
+            </div>
 
-             <div className="mt-8 text-center">
+            <div className="mt-8 text-center">
                 <button
                     onClick={onNext}
                     className="text-sm font-medium text-slate-500 hover:text-slate-700 hover:underline"
