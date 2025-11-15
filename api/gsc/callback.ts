@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { supabaseServer } from "../../supabaseServerClient";
 
-// FIX: Add type declaration for Buffer to resolve missing type definition in a Vercel/non-Node.js TS environment.
+// Add type declaration for Buffer to resolve missing type definition in a Vercel/non-Node.js TS environment.
 declare var Buffer: {
   from(data: string, encoding?: string): {
     toString(encoding?: string): string;
@@ -38,7 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const tokenJson = await tokenRes.json();
 
   if (!tokenJson.access_token) {
-    return res.status(500).send("Token exchange failed");
+    console.error(tokenJson);
+    return res.redirect("/?gsc_error=true");
   }
 
   const expiresAt =

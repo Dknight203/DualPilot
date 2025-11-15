@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-// FIX: Add type declaration for Buffer to resolve missing type definition in a Vercel/non-Node.js TS environment.
+// Add type declaration for Buffer to resolve missing type definition in a Vercel/non-Node.js TS environment.
 declare var Buffer: {
   from(data: string, encoding?: string): {
     toString(encoding?: string): string;
